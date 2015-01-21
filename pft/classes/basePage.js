@@ -216,8 +216,10 @@ PFT.BasePage.prototype.eval = function() {
     }
 };
 
-PFT.BasePage.prototype.register = function (module) {
-    for (var key in module) {
-        this.prototype[key] = module[key];
-    }
+PFT.BasePage.prototype.extend = function(module) {
+    for (var k in module) {
+        if (module.hasOwnProperty(k)) {
+            this[k] = module[k];
+        }
+    } 
 };
