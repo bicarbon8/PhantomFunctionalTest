@@ -3,6 +3,7 @@ var PFT = PFT || {};
 PFT.BasePage = function(page, baseUrl) {
     this.page = page || PFT.createPage();
     this.baseUrl = baseUrl || "";
+    this.keyElements = [];
 };
 
 PFT.BasePage.prototype.open = function(urlParams, callback) {
@@ -12,17 +13,42 @@ PFT.BasePage.prototype.open = function(urlParams, callback) {
     }
     var p = urlParams || "";
     this.page.open(this.baseUrl + p, function afterOpen(status) {
-        PFT.info('opened page? '+status);
+        PFT.debug('opened page: ' + this.baseUrl + " = " + status);
         if(status == 'success') {
             callback.call(this, true);
         } else {
             callback.call(this, false, "opening '" + this.baseUrl + p + "' returned: " + status);
         }
-    });
+    }.bind(this));
+};
+
+PFT.BasePage.prototype.registerKeyElement = function (elementSelector) {
+    this.keyElements.push(elementSelector);
 };
 
 PFT.BasePage.prototype.checkValidity = function(callback) {
-    callback.call(this, false, "cannot call abstract method. each subclass must implement this method.");
+    var selectors = this.keyElements;
+    this._verify(selectors, callback);
+};
+
+PFT.BasePage.prototype._verify = function(selectors, callback) {
+    if (selectors.length > 0) {
+        var selector = selectors.shift();
+        PFT.debug("verifying '" + selector + "' exists on page...");
+        this.waitFor(selector, function elementFound(success, msg) {
+            if (!success) {
+                callback.call(this, false, "unable to locate selector: " + msg);
+            } else {
+                if (selectors.length > 0) {
+                    this._verify(selectors, callback);
+                } else {
+                    callback.call(this, true);
+                }
+            }
+        }.bind(this), PFT.DEFAULT_TIMEOUT);
+    } else {
+        callback.call(this, false, "nothing to verify");
+    }
 };
 
 PFT.BasePage.prototype.withinPage = function(selector) {
@@ -63,8 +89,9 @@ PFT.BasePage.prototype.visible = function(selector) {
 PFT.BasePage.prototype.renderPage = function(name) {
     if (!name) {
         var date = new Date();
-        name = this.page.url.replace(/\//g,'_').replace(/([%:?&\[\]{}\s\W\\])/g,'')+"."+date.getTime()+".jpg";
+        name = this.page.url + "." + date.getTime();
     }
+    name = name.replace(/\//g,'_').replace(/([%:?&\[\]{}\s\W\\])/g,'') + ".jpg";
     name = PFT.IMAGES_DIR + name;
 
     PFT.info("capturing page image: " + name);
@@ -97,7 +124,7 @@ PFT.BasePage.prototype.waitUntil = function(selector, callback, timeInMillisecon
                 this.waitUntil(selector, callback, timeInMilliseconds);
             }.bind(this), PFT.POLLING_INTERVAL);
         } else {
-            PFT.warn("timing out. '"+selector+"' not found by: "+new Date(timeInMilliseconds));
+            PFT.info("timing out. '"+selector+"' not found by: "+new Date(timeInMilliseconds));
             callback.call(this, false, "'"+selector+"' not found by: "+new Date(timeInMilliseconds));
         }
     }
@@ -156,8 +183,8 @@ PFT.BasePage.prototype.sendKeys = function(selector, value, callback) {
     try {
         if(value) {
             var character = value.substring(0,1);
-            PFT.trace("appending value of '"+character+"' to: '"+selector+"'");
-            value = value.substring(1,value.length);
+            PFT.trace("appending value of '" + character + "' to: '" + selector + "'");
+            value = value.substring(1, value.length);
             this.eval(function(s) {
                 var evt;
                 function fireEvent(element, event) {
@@ -181,13 +208,13 @@ PFT.BasePage.prototype.sendKeys = function(selector, value, callback) {
                 fireEvent(el, 'keydown');
                 fireEvent(el, 'keyup');
                 fireEvent(el, 'focus');
-            }, { "sel": selector.toString(), "ch": character });
+            }, { "sel": selector, "ch": character });
             this.page.sendEvent('keyup', character);
 
             if(value.length > 0) {
-                setTimeout(function() {
+                setTimeout(function afterSendKey() {
                     this.sendKeys(selector, value, callback);
-                }.bind(this), 50);
+                }.bind(this), 25);
             } else {
                 callback.call(this, true);
             }

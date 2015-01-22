@@ -5,9 +5,10 @@ PFT.tester = {
     running: false,
     testQueue: [],
     current: null,
-    passResults: {},
-    failResults: {},
-    errorResults: {},
+    passes: [],
+    failures: [],
+    errors: [],
+    remainingCount: 0,
 
     suite: function (name, options) {
         PFT.tester.appendToExecutionQueue(name, "suite", function suite() {
@@ -27,35 +28,40 @@ PFT.tester = {
             var parameter = parameters[i];
             var testName = name + " - " + JSON.stringify(parameter);
             if (options && options.setup) {
-                PFT.tester.appendToExecutionQueue(testName + " - Setup", "setup", function setup() {
+                PFT.tester.appendToExecutionQueue("Setup - " + testName, "setup", parameter, function setup(parameter) {
                     options.setup.call(this, parameter);
                 });
             }
-            PFT.tester.appendToExecutionQueue(testName, "test", function runTest() {
-                PFT.info("Test Started: " + PFT.tester.current.name);
-                PFT.tester.testStarted({ test: PFT.tester.current });
+            PFT.tester.remainingCount++;
+            PFT.tester.appendToExecutionQueue(testName, "test", parameter, function runTest(parameter) {
+                PFT.info("Started: " + PFT.tester.current.name);
+                PFT.tester.onTestStarted({ test: PFT.tester.current });
                 callback.call(this, parameter);
             });
             if (options && options.tearDown) {
-                PFT.tester.appendToExecutionQueue(testName + " - TearDown", "teardown", function tearDown() {
+                PFT.tester.appendToExecutionQueue("TearDown - " + testName, "teardown", parameter, function tearDown(parameter) {
                     options.tearDown.call(this, parameter);
                 });
             }
         }
     },
 
-    appendToExecutionQueue: function (name, type, fn) {
+    appendToExecutionQueue: function (name, type, parameters, fn) {
         PFT.tester.testQueue.push({
             fn: fn,
             type: type,
             name: name,
+            parameters: parameters,
         });
     },
 
     done: function () {
-        PFT.info("Test Completed: " + PFT.tester.current.name);
-        PFT.tester.testCompleted({ test: PFT.tester.current });
+        PFT.info("Completed: " + PFT.tester.current.name);
+        PFT.tester.onTestCompleted({ test: PFT.tester.current });
         PFT.tester.ready = true;
+        if (PFT.tester.current.type === "test") {
+            PFT.tester.remainingCount--;
+        }
     },
 
     assert: {
@@ -64,10 +70,10 @@ PFT.tester = {
             if (!value) {
                 var m = message || "expected 'true' but was 'false'";
                 m = "Error in: " + PFT.tester.current.name + "\n\t" + m;
-                if (!PFT.tester.current.failures) {
-                    PFT.tester.current.failures = [];
+                if (!PFT.tester.failures) {
+                    PFT.tester.failures = [];
                 }
-                PFT.tester.current.failures.push(m);
+                PFT.tester.failures.push(m);
                 PFT.error(m);
                 throw m;
             } else {
@@ -104,25 +110,29 @@ PFT.tester = {
     },
 
     executionLoop: function () {
-        if (PFT.tester.testQueue.length) {
+        if (PFT.tester.testQueue.length > 0) {
             if (PFT.tester.ready && PFT.tester.running) {
                 try {
                     PFT.tester.ready = false;
                     var test = PFT.tester.testQueue.shift();
                     PFT.tester.current = test;
-                    test.fn();
+                    test.fn.call(this, test.parameters);
                 } catch(e) {
-                    PFT.error("Test Failure due to: " + e);
-                    // TODO: increase error count
+                    var msg = "Error due to: " + e;
+                    PFT.error(msg);
+                    PFT.tester.errors.push(msg);
                     PFT.tester.done();
                 }
-            } else {
-                setTimeout(PFT.tester.executionLoop, 10);
             }
         } else {
-            // TODO: display completion details
+            if (PFT.tester.remainingCount < 1) {
+                PFT.tester.exit();
+            }
         }
-        PFT.tester.running = false;
+
+        if (PFT.tester.running) {
+            setTimeout(PFT.tester.executionLoop, 10);
+        }
     },
 
     stop: function () {
@@ -131,13 +141,15 @@ PFT.tester = {
 
     exit: function () {
         PFT.tester.stop();
-        phantom.exit();
+        var exitCode = PFT.tester.errors.length + PFT.tester.failures.length;
+        // TODO: display exit details
+        phantom.exit(exitCode);
     },
 
-    testStarted: function (details) {
+    onTestStarted: function (details) {
         // hook for testing
     },
-    testCompleted: function (details) {
-        // hoook for testing
+    onTestCompleted: function (details) {
+        // hook for testing
     },
 };

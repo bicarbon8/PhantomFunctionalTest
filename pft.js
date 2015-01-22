@@ -14,8 +14,10 @@ PFT.createPage = function(viewport, headers) {
             height: 800
         };
     }
+    PFT.debug("setting viewport to: " + JSON.stringify(viewport));
     page.viewportSize = viewport;
     if (headers) {
+        PFT.debug("setting headers to: " + JSON.stringify(headers));
         for (var i=0; i<headers.length; i++) {
             var header = headers[i];
             page = PFT.addHeader(page, header.name, header.value);
@@ -120,20 +122,4 @@ PFT.convertMsToHumanReadable = function (milliseconds) {
     }
 
     return out;
-};
-
-PFT.getRandomSmallViewWidth = function () {
-    return PFT.getRandomIntBetween(PFT.SMALLVIEW_MIN, PFT.SMALLVIEW_MAX);
-};
-
-PFT.getRandomMediumViewWidth = function () {
-    return PFT.getRandomIntBetween(PFT.MEDIUMVIEW_MIN, PFT.MEDIUMVIEW_MAX);
-};
-
-PFT.getRandomLargeViewWidth = function () {
-    return PFT.getRandomIntBetween(PFT.LARGEVIEW_MIN, PFT.LARGEVIEW_MAX);
-};
-
-PFT.getRandomIntBetween = function (min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
 };

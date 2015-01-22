@@ -23,7 +23,7 @@ module.exports = function(grunt) {
     },
     uglify: {
       options: {
-        beautify: true,
+        // beautify: true,
         mangle: true,
         compress: {
           "dead_code": false
