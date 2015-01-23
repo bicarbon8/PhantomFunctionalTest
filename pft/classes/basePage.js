@@ -4,6 +4,17 @@ PFT.BasePage = function(page, baseUrl) {
     this.page = page || PFT.createPage();
     this.baseUrl = baseUrl || "";
     this.keyElements = [];
+
+    this.page.onError = function (msg, trace) {
+        // capture errors and log
+        var msgStack = [msg];
+        if (trace && trace.length) {
+            trace.forEach(function(t) {
+                msgStack.push(' -> ' + (t.file || t.sourceURL) + ': ' + t.line + (t.function ? ' (in function ' + t.function +')' : ''));
+            });
+        }
+        PFT.Logger.log(PFT.Logger.ERROR, msgStack.join('\n'), false);
+    };
 };
 
 PFT.BasePage.prototype.open = function(urlParams, callback) {
@@ -88,11 +99,10 @@ PFT.BasePage.prototype.visible = function(selector) {
 
 PFT.BasePage.prototype.renderPage = function(name) {
     if (!name) {
-        var date = new Date();
-        name = this.page.url + "." + date.getTime();
+        name = this.page.url;
     }
-    name = name.replace(/\//g,'_').replace(/([%:?&\[\]{}\s\W\\])/g,'') + ".jpg";
-    name = PFT.IMAGES_DIR + name;
+    name = name.replace(/\//g,'_').replace(/([%:?&\[\]{}\s\W\\])/g,'');
+    name = PFT.IMAGES_DIR + name + "." + new Date().getTime() + ".jpg";
 
     PFT.info("capturing page image: " + name);
     this.page.render(name, { quality: '50' });
@@ -248,5 +258,5 @@ PFT.BasePage.prototype.extend = function(module) {
         if (module.hasOwnProperty(k)) {
             this[k] = module[k];
         }
-    } 
+    }
 };
