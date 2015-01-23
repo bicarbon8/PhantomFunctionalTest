@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+
+var phantomjs = require('phantomjs');
+
+var userArgs = [];
+var debug = "";
+for (var i=2; i<process.argv.length; i++) {
+    var arg = process.argv[i];
+    if (arg == "--debug") {
+        debug = "--remote-debugger-port=9999 ";
+    } else {
+        userArgs.push(arg);
+    }
+}
+
+var path = require('path');
+var cwd = path.resolve(process.cwd(), '.');
+var wrapper = path.join(__dirname, '..', 'lib', 'wrapper.js');
+userArgs.unshift(wrapper);
+
+var exec = require('child_process').exec;
+var command = phantomjs.path + ' --ignore-ssl-errors=yes --ssl-protocol=any ' + debug + userArgs.join(" ");
+var child = exec(command, {cwd: cwd}, function(err, stdout, stderr) {
+    if (err) throw err;
+    console.log(stdout);
+    console.log(stderr);
+});
