@@ -1,0 +1,487 @@
+/*! PFT v1.0.0, created by: Jason Holt Smith <bicarbon8@gmail.com> 2015-01-24 11:46:11 */var PFT = {};
+
+PFT.POLLING_INTERVAL = 1e3, PFT.DEFAULT_TIMEOUT = 6e4, PFT.IMAGES_DIR = "./img/", 
+PFT.createPage = function(viewport, headers) {
+    PFT.debug("generating new page...");
+    var page = null;
+    if (page = PFT.webpage.create(), viewport || (viewport = {
+        width: 1024,
+        height: 800
+    }), PFT.debug("setting viewport to: " + JSON.stringify(viewport)), page.viewportSize = viewport, 
+    headers) {
+        PFT.debug("setting headers to: " + JSON.stringify(headers));
+        for (var i = 0; i < headers.length; i++) {
+            var header = headers[i];
+            page = PFT.addHeader(page, header.name, header.value);
+        }
+    }
+    return page;
+}, PFT.addHeader = function(page, name, value) {
+    var headers = page.customHeaders;
+    return headers || (headers = {}), headers[name] = value, page.customHeaders = headers, 
+    page;
+}, PFT.getCookieValue = function(cookieName) {
+    PFT.debug("checking for cookie '" + cookieName + "' in cookies...");
+    for (var key in phantom.cookies) {
+        var cookie = phantom.cookies[key];
+        if (cookie.name.toLowerCase() == cookieName.toLowerCase()) return PFT.debug("found '" + cookieName + "' cookie with value of: '" + cookie.value + "'"), 
+        cookie.value;
+    }
+}, PFT.trace = function(message) {
+    PFT.Logger.log(PFT.Logger.TRACE, message, !0);
+}, PFT.debug = function(message) {
+    PFT.Logger.log(PFT.Logger.DEBUG, message);
+}, PFT.info = function(message) {
+    PFT.Logger.log(PFT.Logger.INFO, message);
+}, PFT.warn = function(message) {
+    PFT.Logger.log(PFT.Logger.WARN, message);
+}, PFT.error = function(message, page) {
+    PFT.Logger.log(PFT.Logger.ERROR, message, !0), page && page.renderPage();
+}, PFT.guid = function() {
+    function s4() {
+        return Math.floor(65536 * (1 + Math.random())).toString(16).substring(1);
+    }
+    return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
+}, PFT.convertMsToHumanReadable = function(milliseconds) {
+    var date = new Date(milliseconds), h = date.getHours(), m = date.getMinutes(), s = date.getSeconds(), ms = date.getMilliseconds(), out = "";
+    return h > 0 && (out += h, out += 1 == h ? " hour " : " hours "), m > 0 && (out += m, 
+    out += 1 == m ? " minute " : " minutes "), s > 0 && (out += s, out += 1 == s ? " second " : " seconds "), 
+    ms > 0 && (out += ms, out += 1 == ms ? " millisecond" : " milliseconds"), out;
+}, phantom.onError = function(msg, trace) {
+    var msgStack = [ msg ];
+    trace && trace.length && trace.forEach(function(t) {
+        msgStack.push(" -> " + (t.file || t.sourceURL) + ": " + t.line + (t["function"] ? " (in function " + t["function"] + ")" : ""));
+    }), PFT.Logger.log(PFT.Logger.ERROR, msgStack.join("\n"), !1), phantom.exit(1);
+};
+
+var PFT = PFT || {};
+
+PFT.PageMock = function(id) {
+    this.url = "", this.viewportSize = {}, this.id = id, this.viewportSize = {
+        width: "200",
+        height: "100"
+    }, this.frame = null, this.urlBar = null, this.br = null;
+}, PFT.PageMock.prototype.open = function(url, callback) {
+    this.url = url, this.urlBar || (this.urlBar = document.createElement("div"), this.urlBar.style.width = this.viewportSize.width + "px", 
+    this.urlBar.style.border = "solid 1px black", this.urlBar.id = "url" + this.id, 
+    this.urlBar.innerHTML = url, document.body.appendChild(this.urlBar), this.br = document.createElement("br"), 
+    document.body.appendChild(this.br)), this.frame || (this.frame = document.createElement("iframe"), 
+    this.frame.width = this.viewportSize.width + "px", this.frame.height = this.viewportSize.height + "px", 
+    document.body.appendChild(this.frame), this.frame.id = this.id), this.frame.onload = function() {
+        this.onLoadFinished("success"), PFT.phantom.updatePhantomCookies(this.frame), this.frame.onload = function() {
+            this.onLoadFinished("success"), this.urlBar.innerHTML = this.frame.contentWindow.location.href;
+        }.bind(this), this.urlBar.innerHTML = this.frame.contentWindow.location.href, callback("success");
+    }.bind(this), this.frame.src = this.url;
+}, PFT.PageMock.prototype.clearCookies = function() {
+    try {
+        var cookies = this.frame.contentDocument.cookie, cookiesArray = cookies.split(/[\s]*;[\s]*/);
+        for (var i in cookiesArray) {
+            var cookie = cookiesArray[i];
+            cookie && cookie.length > 0 && this.frame && PFT.phantom.deleteCookie(cookie.substring(0, cookie.indexOf("=")), this.frame);
+        }
+        PFT.phantom.updatePhantomCookies(this.frame);
+    } catch (e) {
+        PFT.error("call to pageMock.clearCookies failed due to: " + e);
+    }
+}, PFT.PageMock.prototype.includeJs = function() {}, PFT.PageMock.prototype.evaluate = function(javascript, value) {
+    var scriptStr = javascript.toString().replace(/function[\s]*\(s\)[\s]*\{[\s]*/, "").replace(/[\s]*\}$/, "").replace(/document./g, 'document.querySelector("#' + this.id.toString() + '").contentDocument.'), result = new Function("s", scriptStr).call(window, value);
+    return PFT.phantom.updatePhantomCookies(this.frame), result;
+}, PFT.PageMock.prototype.sendEvent = function() {}, PFT.PageMock.prototype.render = function() {}, 
+PFT.PageMock.prototype.close = function() {
+    this.url = "", this.viewportSize = {}, document.body.removeChild(this.frame), document.body.removeChild(this.urlBar), 
+    document.body.removeChild(this.br), this.frame = null, this.urlBar = null, this.br = null;
+}, PFT.PageMock.prototype.goBack = function() {
+    this.frame.contentWindow.history.length > 2 && this.frame.contentWindow.history.back();
+}, PFT.PageMock.prototype.onLoadFinished = function() {}, PFT.COUNT = 0, PFT.webpageMock = {
+    create: function() {
+        return PFT.COUNT++, new PageMock("iframe" + PFT.COUNT.toString());
+    }
+}, PFT.webpage = require("webpage") || PFT.webpageMock;
+
+var PFT = PFT || {};
+
+PFT.phantomMock = {
+    injectJs: function(script) {
+        var s = document.createElement("script");
+        s.setAttribute("src", script), document.head.appendChild(s);
+    },
+    exit: function() {},
+    cookies: [],
+    mock: !0,
+    updatePhantomCookies: function(frame) {
+        try {
+            var cookiesStrs = frame.contentDocument.cookie.split(/[\s]*;[\s]*/), cookies = [];
+            cookiesStrs.forEach(function(cookieStr) {
+                var cookie = {
+                    name: cookieStr.substring(0, cookieStr.indexOf("=")),
+                    value: cookieStr.substring(cookieStr.indexOf("=") + 1, cookieStr.length)
+                };
+                cookies.push(cookie);
+            }), phantom.cookies = cookies;
+        } catch (e) {
+            PFT.warn("could not update phantom cookies due to: " + e);
+        }
+    },
+    deleteCookie: function(cookie_name, frame) {
+        try {
+            var cookie_date = new Date();
+            cookie_date.setTime(cookie_date.getTime() - 1), frame.contentDocument.cookie = cookie_name += "=; expires=" + cookie_date.toGMTString(), 
+            document.cookie = cookie_name += "=; expires=" + cookie_date.toGMTString();
+        } catch (e) {
+            PFT.warn("could not delete phantom cookies due to: " + e);
+        }
+    }
+}, PFT.phantom = phantom || PFT.phantomMock;
+
+var PFT = PFT || {};
+
+PFT.systemMock = {
+    env: [],
+    mock: !0
+}, PFT.system = require("system") || PFT.systemMock;
+
+var PFT = PFT || {};
+
+PFT.Logger = {
+    logLevel: PFT.system.env.log_level || "info",
+    UNKNOWN: -1,
+    TRACE: 0,
+    DEBUG: 1,
+    INFO: 2,
+    WARN: 3,
+    ERROR: 4,
+    FATAL: 5,
+    TEST: 100,
+    getLogLevelInt: function(levelStr) {
+        switch (levelStr.toLowerCase()) {
+          case "trace":
+            return PFT.Logger.TRACE;
+
+          case "debug":
+            return PFT.Logger.DEBUG;
+
+          case "info":
+            return PFT.Logger.INFO;
+
+          case "warn":
+            return PFT.Logger.WARN;
+
+          case "error":
+            return PFT.Logger.ERROR;
+
+          case "fatal":
+            return PFT.Logger.FATAL;
+
+          case "qunit":
+            return PFT.Logger.TEST;
+
+          default:
+            return PFT.Logger.UNKNOWN;
+        }
+    },
+    getLogLevelStr: function(levelInt) {
+        switch (levelInt) {
+          case PFT.Logger.TRACE:
+            return "TRACE";
+
+          case PFT.Logger.DEBUG:
+            return "DEBUG";
+
+          case PFT.Logger.INFO:
+            return "INFO";
+
+          case PFT.Logger.WARN:
+            return "WARN";
+
+          case PFT.Logger.ERROR:
+            return "ERROR";
+
+          case PFT.Logger.FATAL:
+            return "FATAL";
+
+          case PFT.Logger.TEST:
+            return "TEST";
+
+          default:
+            return "UNKNOWN";
+        }
+    },
+    log: function(levelInt, message, includeStackTrace) {
+        if (levelInt >= PFT.Logger.getLogLevelInt(PFT.Logger.logLevel)) {
+            includeStackTrace && (message += "\n" + PFT.Logger._getStackTrace());
+            var msg = PFT.Logger.getLogLevelStr(levelInt) + ": " + message;
+            switch (levelInt) {
+              case PFT.Logger.FATAL:
+              case PFT.Logger.ERROR:
+                console.error(msg);
+                break;
+
+              case PFT.Logger.WARN:
+                console.warn(msg);
+                break;
+
+              default:
+                console.log(msg);
+            }
+        }
+    },
+    _getStackTrace: function() {
+        var callstack = "", isCallstackPopulated = !1;
+        try {
+            i.dont.exist += 0;
+        } catch (e) {
+            var lines, i;
+            if (e.stack) {
+                for (lines = e.stack.split("\n"), i = 2; i < lines.length; i++) callstack += lines[i] + "\n";
+                isCallstackPopulated = !0;
+            }
+        }
+        if (!isCallstackPopulated) for (var currentFunction = arguments.callee.caller; currentFunction; ) {
+            var fn = currentFunction.toString(), fname = fn.substring(fn.indexOf("function") + 8, fn.indexOf("")) || "anonymous";
+            callstack += "	" + fname + "\n", currentFunction = currentFunction.caller;
+        }
+        return callstack;
+    }
+};
+
+var PFT = PFT || {};
+
+PFT.BasePage = function(page, baseUrl) {
+    this.page = page || PFT.createPage(), this.baseUrl = baseUrl || "", this.keyElements = [], 
+    this.page.onError = function(msg, trace) {
+        var msgStack = [ msg ];
+        trace && trace.length && trace.forEach(function(t) {
+            msgStack.push(" -> " + (t.file || t.sourceURL) + ": " + t.line + (t["function"] ? " (in function " + t["function"] + ")" : ""));
+        }), PFT.Logger.log(PFT.Logger.ERROR, msgStack.join("\n"), !1);
+    };
+}, PFT.BasePage.prototype.open = function(urlParams, callback) {
+    urlParams && !callback && "function" == typeof urlParams && (callback = urlParams, 
+    urlParams = void 0);
+    var p = urlParams || "";
+    this.page.open(this.baseUrl + p, function(status) {
+        PFT.debug("opened page: " + this.baseUrl + " = " + status), "success" == status ? callback.call(this, !0) : callback.call(this, !1, "opening '" + this.baseUrl + p + "' returned: " + status);
+    }.bind(this));
+}, PFT.BasePage.prototype.registerKeyElement = function(elementSelector) {
+    this.keyElements.push(elementSelector);
+}, PFT.BasePage.prototype.checkValidity = function(callback) {
+    var selectors = this.keyElements;
+    this._verify(selectors, callback);
+}, PFT.BasePage.prototype._verify = function(selectors, callback) {
+    if (selectors.length > 0) {
+        var selector = selectors.shift();
+        PFT.debug("verifying '" + selector + "' exists on page..."), this.waitFor(selector, function(success, msg) {
+            success ? selectors.length > 0 ? this._verify(selectors, callback) : callback.call(this, !0) : callback.call(this, !1, "unable to locate selector: " + msg);
+        }.bind(this), PFT.DEFAULT_TIMEOUT);
+    } else callback.call(this, !1, "nothing to verify");
+}, PFT.BasePage.prototype.withinPage = function(selector) {
+    PFT.debug("checking for: '" + selector + "' within page.");
+    try {
+        var pos = this.elementPosition(selector);
+        return pos.left >= 0 && pos.top >= 0 && pos.left <= this.page.viewportSize.width && pos.top <= this.page.viewportSize.height ? !0 : !1;
+    } catch (e) {
+        return !1;
+    }
+}, PFT.BasePage.prototype.visible = function(selector) {
+    PFT.debug("checking for: '" + selector + "' visible.");
+    try {
+        var display = this.eval(function(s) {
+            var el = document.querySelector(s);
+            return "undefined" != typeof window.getComputedStyle ? window.getComputedStyle(el, null).display : "undefined" !== el.currentStyle ? el.currentStyle.display : void 0;
+        }, selector);
+        return "none" === display ? !1 : !0;
+    } catch (e) {
+        return !1;
+    }
+}, PFT.BasePage.prototype.renderPage = function(name) {
+    name || (name = this.page.url), name = name.replace(/\//g, "_").replace(/([%:?&\[\]{}\s\W\\])/g, ""), 
+    name = PFT.IMAGES_DIR + name + "." + new Date().getTime() + ".jpg", PFT.info("capturing page image: " + name), 
+    this.page.render(name, {
+        quality: "50"
+    });
+}, PFT.BasePage.prototype.waitFor = function(selector, callback, maxMsWait) {
+    PFT.debug("waiting for: '" + selector + "' or until " + maxMsWait + "ms has passed.");
+    var expiry = new Date().getTime() + 1e4;
+    return maxMsWait && "number" == typeof maxMsWait && (expiry = new Date().getTime() + maxMsWait), 
+    this.waitUntil(selector, callback, expiry);
+}, PFT.BasePage.prototype.waitUntil = function(selector, callback, timeInMilliseconds) {
+    PFT.debug("waiting for: '" + selector + "' or for " + (timeInMilliseconds - new Date().getTime()) + " milliseconds"), 
+    this.exists(selector) ? (PFT.debug("selector found."), callback.call(this, !0)) : (PFT.debug("selector not found."), 
+    new Date().getTime() + PFT.POLLING_INTERVAL < timeInMilliseconds ? (PFT.debug("retrying..."), 
+    setTimeout(function() {
+        this.waitUntil(selector, callback, timeInMilliseconds);
+    }.bind(this), PFT.POLLING_INTERVAL)) : (PFT.info("timing out. '" + selector + "' not found by: " + new Date(timeInMilliseconds)), 
+    callback.call(this, !1, "'" + selector + "' not found by: " + new Date(timeInMilliseconds))));
+}, PFT.BasePage.prototype.exists = function(selector) {
+    PFT.debug("checking for: '" + selector + "' on page.");
+    var condition = this.eval(function(s) {
+        return null !== document.querySelector(s);
+    }, selector.toString());
+    return condition ? (PFT.debug("condition met."), !0) : (PFT.debug("condition failed."), 
+    !1);
+}, PFT.BasePage.prototype.elementPosition = function(selector) {
+    PFT.debug("retrieving: '" + selector + "' position page.");
+    var pos = this.eval(function(s) {
+        return document.querySelector(s).getBoundingClientRect();
+    }, selector.toString());
+    if (!pos || void 0 === pos.left && null === pos.left || void 0 === pos.top && null === pos.top) throw "element could not be located on the page. pos: " + JSON.stringify(pos);
+    return PFT.debug("found '" + selector + "' at position: " + JSON.stringify(pos)), 
+    pos;
+}, PFT.BasePage.prototype.click = function(selector) {
+    PFT.debug("clicking on: '" + selector + "'...");
+    this.elementPosition(selector);
+    PFT.debug("using javascript click..."), this.eval(function(s) {
+        var ev = document.createEvent("MouseEvent");
+        ev.initMouseEvent("click", !0, !0, window, null, 0, 0, 0, 0, !1, !1, !1, !1, 0, null), 
+        document.querySelector(s).dispatchEvent(ev);
+    }, selector);
+}, PFT.BasePage.prototype.getAttribute = function(selector, attribute) {
+    return PFT.debug("returning href value for: '" + selector + "'..."), this.eval(function(s, a) {
+        return document.querySelector(s).getAttribute(a);
+    }, selector.toString(), attribute);
+}, PFT.BasePage.prototype.sendKeys = function(selector, value, callback) {
+    try {
+        if (value) {
+            var character = value.substring(0, 1);
+            PFT.trace("appending value of '" + character + "' to: '" + selector + "'"), value = value.substring(1, value.length), 
+            this.eval(function(s) {
+                function fireEvent(element, event) {
+                    return document.createEventObject ? (evt = document.createEventObject(), element.fireEvent("on" + event, evt)) : document.createEvent ? (evt = document.createEvent("HTMLEvents"), 
+                    evt.initEvent(event, !0, !0), !element.dispatchEvent(evt)) : (evt = new Event(event), 
+                    element.dispatchEvent(evt));
+                }
+                var evt, el = document.querySelector(s.sel);
+                el.value = el.value + s.ch, fireEvent(el, "keydown"), fireEvent(el, "keyup"), fireEvent(el, "focus");
+            }, {
+                sel: selector,
+                ch: character
+            }), this.page.sendEvent("keyup", character), value.length > 0 ? setTimeout(function() {
+                this.sendKeys(selector, value, callback);
+            }.bind(this), 25) : callback.call(this, !0);
+        } else callback.call(this, !1, "no value passed to method: " + value);
+    } catch (e) {
+        callback.call(this, !1, e);
+    }
+}, PFT.BasePage.prototype.setCheckboxState = function(selector, enabled) {
+    PFT.debug("setting state of checkbox for: '" + selector + "' to: " + enabled), enabled ? this.eval(function(s) {
+        document.querySelector(s).checked = !0;
+    }, selector.toString()) : this.eval(function(s) {
+        document.querySelector(s).checked = !1;
+    }, selector.toString());
+}, PFT.BasePage.prototype.eval = function() {
+    return arguments && arguments.length > 0 ? (PFT.debug("evaluating '" + arguments[0] + "' in page..."), 
+    this.page.evaluate.apply(this.page, arguments)) : void 0;
+}, PFT.BasePage.prototype.extend = function(module) {
+    for (var k in module) module.hasOwnProperty(k) && (this[k] = module[k]);
+};
+
+var PFT = PFT || {};
+
+PFT.tester = {
+    ready: !0,
+    running: !1,
+    testQueue: [],
+    current: null,
+    passes: 0,
+    failures: [],
+    errors: [],
+    remainingCount: 0,
+    globalStartTime: null,
+    suite: function(name) {
+        PFT.tester.appendToExecutionQueue(name, "suite", function() {
+            PFT.Logger.log(PFT.Logger.TEST, "Suite Started: " + name), PFT.tester.done();
+        });
+    },
+    test: function(name, parameters, options, callback) {
+        2 === arguments.length && (callback = parameters), parameters && 0 !== parameters.length || (parameters = [], 
+        parameters.push({}));
+        for (var i = 0; i < parameters.length; i++) {
+            var parameter = parameters[i], testName = name + " - " + JSON.stringify(parameter);
+            options && options.setup && PFT.tester.appendToExecutionQueue("Setup - " + testName, "setup", parameter, function(parameter) {
+                options.setup.call(this, parameter);
+            }), PFT.tester.remainingCount++, PFT.tester.appendToExecutionQueue(testName, "test", parameter, function(parameter) {
+                PFT.Logger.log(PFT.Logger.TEST, "Started: " + PFT.tester.current.name), PFT.tester.onTestStarted({
+                    test: PFT.tester.current
+                }), callback.call(this, parameter);
+            }), options && options.tearDown && PFT.tester.appendToExecutionQueue("TearDown - " + testName, "teardown", parameter, function(parameter) {
+                options.tearDown.call(this, parameter);
+            });
+        }
+    },
+    appendToExecutionQueue: function(name, type, parameters, fn) {
+        PFT.tester.testQueue.push({
+            fn: fn,
+            type: type,
+            name: name,
+            parameters: parameters,
+            passes: 0,
+            failures: [],
+            errors: []
+        });
+    },
+    done: function() {
+        PFT.Logger.log(PFT.Logger.TEST, "Completed: " + PFT.tester.current.name), PFT.tester.current.duration = PFT.convertMsToHumanReadable(new Date().getTime() - PFT.tester.current.startTime), 
+        PFT.tester.onTestCompleted({
+            test: PFT.tester.current
+        }), PFT.tester.ready = !0, "test" === PFT.tester.current.type && PFT.tester.remainingCount--;
+    },
+    assert: {
+        isTrue: function(value, message) {
+            if (!value) {
+                var m = message || "expected 'true' but was 'false'";
+                throw m = "Error in: " + PFT.tester.current.name + "\n	" + m, PFT.tester.failures.push(m), 
+                PFT.tester.current.failures.push(m), PFT.Logger.log(PFT.Logger.TEST, m, !0), m;
+            }
+            PFT.tester.passes++, PFT.tester.current.passes++;
+        },
+        isFalse: function(value, message) {
+            PFT.tester.assert.isTrue(!value, message);
+        }
+    },
+    pass: function(message) {
+        var m = message || PFT.tester.current.name;
+        PFT.Logger.log(PFT.Logger.TEST, "PASS: " + m), PFT.tester.assert.isTrue(!0, message), 
+        PFT.tester.done();
+    },
+    fail: function(message) {
+        var m = message || PFT.tester.current.name;
+        PFT.Logger.log(PFT.Logger.TEST, "FAIL: " + m, !0), PFT.tester.assert.isTrue(!1, message), 
+        PFT.tester.done();
+    },
+    start: function() {
+        PFT.tester.running || (PFT.tester.globalStartTime = new Date().getTime(), PFT.tester.running = !0, 
+        PFT.tester.executionLoop());
+    },
+    executionLoop: function() {
+        if (PFT.tester.testQueue.length > 0) {
+            if (PFT.tester.ready && PFT.tester.running) try {
+                PFT.tester.ready = !1;
+                var test = PFT.tester.testQueue.shift();
+                PFT.tester.current = test, PFT.tester.current.startTime = new Date().getTime(), 
+                test.fn.call(this, test.parameters);
+            } catch (e) {
+                var msg = "Error due to: " + e;
+                PFT.Logger.log(PFT.Logger.TEST, msg, !0), PFT.tester.errors.push(msg), PFT.tester.current.errors.push(m), 
+                PFT.tester.done();
+            }
+        } else PFT.tester.remainingCount < 1 && PFT.tester.exit();
+        PFT.tester.running && setTimeout(PFT.tester.executionLoop, 10);
+    },
+    stop: function() {
+        PFT.tester.running = !1;
+    },
+    exit: function() {
+        PFT.tester.stop();
+        var exitCode = PFT.tester.errors.length + PFT.tester.failures.length, duration = PFT.convertMsToHumanReadable(new Date().getTime() - PFT.tester.globalStartTime), msg = "Completed in " + duration + " with " + PFT.tester.passes + " passes, " + PFT.tester.failures.length + " failures, " + PFT.tester.errors.length + " errors.";
+        PFT.Logger.log(PFT.Logger.TEST, msg), setTimeout(function() {
+            phantom.exit(exitCode);
+        }, 1e3);
+    },
+    onTestStarted: function() {},
+    onTestCompleted: function() {}
+}, Function.prototype.bind || (Function.prototype.bind = function(oThis) {
+    if ("function" != typeof this) throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+    var aArgs = Array.prototype.slice.call(arguments, 1), fToBind = this, fNOP = function() {}, fBound = function() {
+        return fToBind.apply(this instanceof fNOP && oThis ? this : oThis, aArgs.concat(Array.prototype.slice.call(arguments)));
+    };
+    return fNOP.prototype = this.prototype, fBound.prototype = new fNOP(), fBound;
+});
