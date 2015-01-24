@@ -23,10 +23,27 @@ if (debug !== "") {
 userArgs.unshift(pft);
 userArgs.unshift(wrapper);
 
-var exec = require('child_process').exec;
-var command = phantomjs.path + ' --ignore-ssl-errors=yes --ssl-protocol=any ' + debug + userArgs.join(" ");
-var child = exec(command, {cwd: cwd}, function(err, stdout, stderr) {
-    if (err) throw err;
-    console.log(stdout);
-    console.log(stderr);
+var spawn = require('child_process').spawn;
+var command = phantomjs.path;
+var args = ['--ignore-ssl-errors=yes','--ssl-protocol=any'];
+if (debug !== "") {
+    args.push(debug);
+}
+for (var s in userArgs) {
+    var userArg = userArgs[s];
+    args.push(userArg);
+}
+var phantomjs = spawn(command, args, {cwd: cwd});
+// add a 'data' event listener for the spawn instance
+phantomjs.stdout.on('data', function(data) { 
+    var str = data.toString(), lines = str.split(/(\r?\n)/g);
+    console.log(data.toString());
+});
+phantomjs.on('error', function(err) {
+    console.log(err);
+    process.exit(code);
+});
+// when the spawn child process exits, check if there were any errors and close the writeable stream
+phantomjs.on('exit', function(code) {
+    process.exit(code);
 });

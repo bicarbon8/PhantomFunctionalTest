@@ -1,4 +1,4 @@
-/*! PFT v1.0.0, created by: Jason Holt Smith <bicarbon8@gmail.com> 2015-01-24 11:46:11 */var PFT = {};
+/*! PFT v1.0.0, created by: Jason Holt Smith <bicarbon8@gmail.com> 2015-01-24 20:29:52 */var PFT = {};
 
 PFT.POLLING_INTERVAL = 1e3, PFT.DEFAULT_TIMEOUT = 6e4, PFT.IMAGES_DIR = "./img/", 
 PFT.createPage = function(viewport, headers) {
