@@ -534,3 +534,4 @@ PFT.tester = {
     };
     return fNOP.prototype = this.prototype, fBound.prototype = new fNOP(), fBound;
 });
+module ? module.exports = PFT : ;

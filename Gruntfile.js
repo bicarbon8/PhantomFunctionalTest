@@ -22,19 +22,6 @@ module.exports = function(grunt) {
       },
     },
     uglify: {
-      buildMinified: {
-        options: {
-          mangle: true,
-          compress: {
-            "dead_code": false
-          },
-          sourceMap: true,
-          banner: '/*! <%= pkg.name %> v<%= pkg.version %>, created by: <%= pkg.author.name %> <%= pkg.author.email %> <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %> */'
-        },
-        files: {
-          'dist/<%= pkg.name %>-<%= pkg.version %>.min.js': ['<%= files.js %>']
-        }
-      },
       buildBeatified: {
         options: {
           beautify: true,
@@ -51,21 +38,16 @@ module.exports = function(grunt) {
       default_options: {
         files: [
           {
-            append: "\nmodule.exports = PFT;",
-            input: 'dist/<%= pkg.name %>-<%= pkg.version %>.min.js',
-            output: 'dist/<%= pkg.name %>-<%= pkg.version %>.min.js'
-          },
-          {
-            append: "\nmodule.exports = PFT;",
+            append: "\nmodule ? module.exports = PFT : ;",
             input: 'dist/<%= pkg.name %>-<%= pkg.version %>.js',
-            output: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
+            output: 'dist/<%= pkg.name %>-<%= pkg.version %>-module.js'
           }
         ]
       }
     },
     jsdoc : {
       dist : {
-        src: ['<%= files.js %>'], 
+        src: ['<%= files.js %>'],
         options: {
           destination: 'dist/doc'
         }
@@ -86,9 +68,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-jsdoc');
 
   // Default task(s).
-  grunt.registerTask('default', ['clean','uglify']);//,'file_append','jsdoc']);
+  grunt.registerTask('default', ['clean','uglify','file_append','jsdoc']);
 
   // no documentation
-  grunt.registerTask('nodoc', ['clean','ugilify']);//,'file_append']);
+  grunt.registerTask('nodoc', ['clean','ugilify','file_append']);
 
 };
