@@ -6,9 +6,6 @@ module.exports = function(grunt) {
     files: {
       js: [
         "lib/pft.js",
-        "lib/pft/shims/page.js",
-        "lib/pft/shims/phantom.js",
-        "lib/pft/shims/system.js",
         "lib/pft/objects/logger.js",
         "lib/pft/classes/basePage.js",
         "lib/pft/objects/tester.js",

@@ -1,6 +1,6 @@
 {
   "name": "PFT",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "a Functional Test Framework based on QUnit and PhantomJs supporting Javascript UI testing",
   "main": "dist/pft-1.0.0.min.js",
   "scripts": {

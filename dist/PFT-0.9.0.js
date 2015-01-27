@@ -1,10 +1,10 @@
-/*! PFT v1.0.0, created by: Jason Holt Smith <bicarbon8@gmail.com> 2015-01-26 17:42:18 */var PFT = {};
+/*! PFT v0.9.0, created by: Jason Holt Smith <bicarbon8@gmail.com> 2015-01-27 18:28:57 */var PFT = {};
 
 PFT.POLLING_INTERVAL = 1e3, PFT.DEFAULT_TIMEOUT = 6e4, PFT.IMAGES_DIR = "./img/", 
 PFT.createPage = function(viewport, headers) {
     PFT.debug("generating new page...");
     var page = null;
-    if (page = PFT.webpage.create(), viewport || (viewport = {
+    if (page = require("webpage").create(), viewport || (viewport = {
         width: 1024,
         height: 800
     }), PFT.debug("setting viewport to: " + JSON.stringify(viewport)), page.viewportSize = viewport, 
@@ -36,8 +36,8 @@ PFT.createPage = function(viewport, headers) {
     PFT.Logger.log(PFT.Logger.INFO, message);
 }, PFT.warn = function(message) {
     PFT.Logger.log(PFT.Logger.WARN, message);
-}, PFT.error = function(message, page) {
-    PFT.Logger.log(PFT.Logger.ERROR, message, !0), page && page.renderPage();
+}, PFT.error = function(message) {
+    PFT.Logger.log(PFT.Logger.ERROR, message, !0);
 }, PFT.guid = function() {
     function s4() {
         return Math.floor(65536 * (1 + Math.random())).toString(16).substring(1);
@@ -54,8 +54,8 @@ PFT.createPage = function(viewport, headers) {
     page.render(name, {
         quality: "50"
     }));
-}, phantom.onError = function(msg, trace) {
-    if (!(PFT.tester.running && PFT.tester.current && PFT.tester.current.halt)) {
+}, PFT.onPageConsoleMessage = function() {}, phantom.onError = function(msg, trace) {
+    if (PFT.tester.running && PFT.tester.current && PFT.tester.current.halt) PFT.tester.done(); else {
         var msgStack = [ msg ];
         trace && trace.length && trace.forEach(function(t) {
             msgStack.push(" -> " + (t.file || t.sourceURL) + ": " + t.line + (t["function"] ? " (in function " + t["function"] + ")" : ""));
@@ -67,94 +67,8 @@ PFT.createPage = function(viewport, headers) {
 
 var PFT = PFT || {};
 
-PFT.PageMock = function(id) {
-    this.url = "", this.viewportSize = {}, this.id = id, this.viewportSize = {
-        width: "200",
-        height: "100"
-    }, this.frame = null, this.urlBar = null, this.br = null;
-}, PFT.PageMock.prototype.open = function(url, callback) {
-    this.url = url, this.urlBar || (this.urlBar = document.createElement("div"), this.urlBar.style.width = this.viewportSize.width + "px", 
-    this.urlBar.style.border = "solid 1px black", this.urlBar.id = "url" + this.id, 
-    this.urlBar.innerHTML = url, document.body.appendChild(this.urlBar), this.br = document.createElement("br"), 
-    document.body.appendChild(this.br)), this.frame || (this.frame = document.createElement("iframe"), 
-    this.frame.width = this.viewportSize.width + "px", this.frame.height = this.viewportSize.height + "px", 
-    document.body.appendChild(this.frame), this.frame.id = this.id), this.frame.onload = function() {
-        this.onLoadFinished("success"), PFT.phantom.updatePhantomCookies(this.frame), this.frame.onload = function() {
-            this.onLoadFinished("success"), this.urlBar.innerHTML = this.frame.contentWindow.location.href;
-        }.bind(this), this.urlBar.innerHTML = this.frame.contentWindow.location.href, callback("success");
-    }.bind(this), this.frame.src = this.url;
-}, PFT.PageMock.prototype.clearCookies = function() {
-    try {
-        var cookies = this.frame.contentDocument.cookie, cookiesArray = cookies.split(/[\s]*;[\s]*/);
-        for (var i in cookiesArray) {
-            var cookie = cookiesArray[i];
-            cookie && cookie.length > 0 && this.frame && PFT.phantom.deleteCookie(cookie.substring(0, cookie.indexOf("=")), this.frame);
-        }
-        PFT.phantom.updatePhantomCookies(this.frame);
-    } catch (e) {
-        PFT.error("call to pageMock.clearCookies failed due to: " + e);
-    }
-}, PFT.PageMock.prototype.includeJs = function() {}, PFT.PageMock.prototype.evaluate = function(javascript, value) {
-    var scriptStr = javascript.toString().replace(/function[\s]*\(s\)[\s]*\{[\s]*/, "").replace(/[\s]*\}$/, "").replace(/document./g, 'document.querySelector("#' + this.id.toString() + '").contentDocument.'), result = new Function("s", scriptStr).call(window, value);
-    return PFT.phantom.updatePhantomCookies(this.frame), result;
-}, PFT.PageMock.prototype.sendEvent = function() {}, PFT.PageMock.prototype.render = function() {}, 
-PFT.PageMock.prototype.close = function() {
-    this.url = "", this.viewportSize = {}, document.body.removeChild(this.frame), document.body.removeChild(this.urlBar), 
-    document.body.removeChild(this.br), this.frame = null, this.urlBar = null, this.br = null;
-}, PFT.PageMock.prototype.goBack = function() {
-    this.frame.contentWindow.history.length > 2 && this.frame.contentWindow.history.back();
-}, PFT.PageMock.prototype.onLoadFinished = function() {}, PFT.COUNT = 0, PFT.webpageMock = {
-    create: function() {
-        return PFT.COUNT++, new PageMock("iframe" + PFT.COUNT.toString());
-    }
-}, PFT.webpage = require("webpage") || PFT.webpageMock;
-
-var PFT = PFT || {};
-
-PFT.phantomMock = {
-    injectJs: function(script) {
-        var s = document.createElement("script");
-        s.setAttribute("src", script), document.head.appendChild(s);
-    },
-    exit: function() {},
-    cookies: [],
-    mock: !0,
-    updatePhantomCookies: function(frame) {
-        try {
-            var cookiesStrs = frame.contentDocument.cookie.split(/[\s]*;[\s]*/), cookies = [];
-            cookiesStrs.forEach(function(cookieStr) {
-                var cookie = {
-                    name: cookieStr.substring(0, cookieStr.indexOf("=")),
-                    value: cookieStr.substring(cookieStr.indexOf("=") + 1, cookieStr.length)
-                };
-                cookies.push(cookie);
-            }), phantom.cookies = cookies;
-        } catch (e) {
-            PFT.warn("could not update phantom cookies due to: " + e);
-        }
-    },
-    deleteCookie: function(cookie_name, frame) {
-        try {
-            var cookie_date = new Date();
-            cookie_date.setTime(cookie_date.getTime() - 1), frame.contentDocument.cookie = cookie_name += "=; expires=" + cookie_date.toGMTString(), 
-            document.cookie = cookie_name += "=; expires=" + cookie_date.toGMTString();
-        } catch (e) {
-            PFT.warn("could not delete phantom cookies due to: " + e);
-        }
-    }
-}, PFT.phantom = phantom || PFT.phantomMock;
-
-var PFT = PFT || {};
-
-PFT.systemMock = {
-    env: [],
-    mock: !0
-}, PFT.system = require("system") || PFT.systemMock;
-
-var PFT = PFT || {};
-
 PFT.Logger = {
-    logLevel: PFT.system.env.log_level || "info",
+    logLevel: require("system").env.log_level || "info",
     UNKNOWN: -1,
     TRACE: 0,
     DEBUG: 1,
@@ -253,11 +167,7 @@ PFT.Logger = {
         }
         return callstack;
     }
-};
-
-var PFT = PFT || {};
-
-PFT.BasePage = function(page, baseUrl) {
+}, PFT.BasePage = function(page, baseUrl) {
     this.page = page || PFT.createPage(), this.baseUrl = baseUrl || "", this.keyElements = [], 
     this.page.onError = function(msg, trace) {
         var msgStack = [ msg ];
@@ -266,6 +176,14 @@ PFT.BasePage = function(page, baseUrl) {
         }), PFT.trace(msgStack.join("\n")), PFT.tester.onPageError({
             message: msgStack.join("\n")
         });
+    }, this.page.onConsoleMessage = function(msg, lineNum, sourceId) {
+        PFT.trace("CONSOLE: " + msg + " (from line #" + lineNum + ' in "' + sourceId + '")');
+        var output = {
+            message: msg,
+            line: lineNum,
+            source: sourceId
+        };
+        PFT.onPageConsoleMessage(output);
     };
 }, PFT.BasePage.prototype.open = function(urlParams, callback) {
     urlParams && !callback && "function" == typeof urlParams && (callback = urlParams, 
@@ -274,6 +192,9 @@ PFT.BasePage = function(page, baseUrl) {
     this.page.open(this.baseUrl + p, function(status) {
         PFT.debug("opened page: " + this.baseUrl + " = " + status), "success" == status ? callback.call(this, !0) : callback.call(this, !1, "opening '" + this.baseUrl + p + "' returned: " + status);
     }.bind(this));
+}, PFT.BasePage.prototype.close = function() {
+    this.page.clearCookies(), this.page.close();
+    for (var key in this) this.hasOwnProperty(key) && (this[key] = void 0);
 }, PFT.BasePage.prototype.registerKeyElement = function(elementSelector) {
     this.keyElements.push(elementSelector);
 }, PFT.BasePage.prototype.checkValidity = function(callback) {
@@ -343,6 +264,10 @@ PFT.BasePage = function(page, baseUrl) {
         ev.initMouseEvent("click", !0, !0, window, null, 0, 0, 0, 0, !1, !1, !1, !1, 0, null), 
         document.querySelector(s).dispatchEvent(ev);
     }, selector);
+}, PFT.BasePage.prototype.getText = function(selector) {
+    return PFT.debug("getting textContent for: '" + selector + "'..."), this.eval(function(s) {
+        return document.querySelector(s).textContent;
+    }, selector.toString());
 }, PFT.BasePage.prototype.getAttribute = function(selector, attribute) {
     return PFT.debug("returning href value for: '" + selector + "'..."), this.eval(function(s, a) {
         return document.querySelector(s).getAttribute(a);
@@ -377,16 +302,12 @@ PFT.BasePage = function(page, baseUrl) {
         document.querySelector(s).checked = !1;
     }, selector.toString());
 }, PFT.BasePage.prototype.eval = function() {
-    return arguments && arguments.length > 0 ? (PFT.debug("evaluating '" + arguments[0] + "' in page..."), 
-    this.page.evaluate.apply(this.page, arguments)) : void 0;
+    return arguments && arguments.length > 0 ? (PFT.debug("eval called with '" + arguments.length + "' arguments"), 
+    PFT.trace("evaluating: '" + JSON.stringify(arguments) + "' in page..."), this.page.evaluate.apply(this.page, arguments)) : void 0;
 }, PFT.BasePage.prototype.extend = function(module) {
     for (var k in module) module.hasOwnProperty(k) && (this[k] = module[k]);
-};
-
-var PFT = PFT || {};
-
-PFT.tester = {
-    timeOutAfter: 6e4,
+}, PFT.tester = {
+    timeOutAfter: PFT.DEFAULT_TIMEOUT,
     ready: !0,
     running: !1,
     testQueue: [],
@@ -434,11 +355,12 @@ PFT.tester = {
         isTrue: function(value, message) {
             if (!value) {
                 var m = message || "expected 'true' but was 'false'";
-                throw m = "Error in: " + PFT.tester.current.name + "\n	" + m, PFT.tester.failures.push(m), 
-                PFT.tester.current.failures.push(m), PFT.tester.onAssertionFailure({
+                throw m = "'" + PFT.tester.current.name + "'\n	" + m, PFT.tester.failures.push(m), 
+                PFT.tester.current.failures.push(m), PFT.tester.current.halt = !0, PFT.Logger.log(PFT.Logger.TEST, "Assert failed - " + m), 
+                PFT.tester.onAssertionFailure({
                     test: PFT.tester.current,
                     message: m
-                }), PFT.tester.current.halt = !0, m;
+                }), m;
             }
             PFT.tester.passes++, PFT.tester.current.passes++;
         },
@@ -469,8 +391,9 @@ PFT.tester = {
     executionLoop: function() {
         var duration = PFT.tester.current && PFT.tester.current.maxDuration ? PFT.tester.current.maxDuration : PFT.tester.timeOutAfter;
         if (PFT.tester.current && PFT.tester.current.startTime && new Date().getTime() - PFT.tester.current.startTime >= duration) {
-            var msg = "Test " + PFT.tester.current.name + " exceeded timeout of " + PFT.tester.timeOutAfter;
-            PFT.tester.current.errors.push(msg), PFT.Logger.log(PFT.Logger.TEST, msg), PFT.tester.onTimeout({
+            var msg = "Test '" + PFT.tester.current.name + "' exceeded timeout of " + duration;
+            PFT.tester.errors.push(msg), PFT.tester.current.errors.push(msg), PFT.Logger.log(PFT.Logger.TEST, msg), 
+            PFT.tester.onTimeout({
                 test: PFT.tester.current,
                 message: msg
             }), PFT.tester.done();
@@ -514,7 +437,7 @@ PFT.tester = {
         }
         for (var i = 0; i < PFT.tester.errors.length; i++) {
             var error = PFT.tester.errors[i];
-            0 === i && (msg += "\nERROR:\n"), msg += "	" + error + "\n";
+            0 === i && (msg += "\nERRORS:\n"), msg += "	" + error + "\n";
         }
         PFT.Logger.log(PFT.Logger.TEST, msg), setTimeout(function() {
             phantom.exit(exitCode);

@@ -16,7 +16,7 @@ for (var i=2; i<process.argv.length; i++) {
 var path = require('path');
 var cwd = path.resolve(process.cwd(), '.');
 var wrapper = path.join(__dirname, '..', 'lib', 'wrapper.js');
-var pft = path.join(__dirname, '..', 'dist', 'PFT-1.0.0.js');
+var pft = path.join(__dirname, '..', 'dist', 'PFT-0.9.0.js');
 userArgs.unshift(pft);
 userArgs.unshift(wrapper);
 
