@@ -1,6 +1,4 @@
-var PFT = PFT || {};
-
-PFT.phantomMock = {
+var phantomMock = {
 	injectJs: function(script) {
 		var s = document.createElement('script');
 		s.setAttribute('src', script);
@@ -39,7 +37,23 @@ PFT.phantomMock = {
 		} catch (e) {
 			PFT.warn("could not delete phantom cookies due to: " + e);
 		}
-	}
+	},
+    onError: function (msg, trace) {
+        // do nothing
+    }
 };
 
-PFT.phantom = phantom || PFT.phantomMock;
+var phantom = phantomMock;
+
+var require = function (name) {
+    switch(name) {
+        case 'system':
+            return system;
+        case 'webpage':
+            return webpage;
+    }
+};
+
+window.onerror = function (msg, url, line) {
+    phantom.onError(msg, line);
+};

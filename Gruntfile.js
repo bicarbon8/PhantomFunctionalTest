@@ -11,6 +11,7 @@ module.exports = function(grunt) {
         "lib/pft/objects/tester.js",
         "lib/pft/polyfills.js",
       ],
+      tests: "test/tests.html"
     },
     clean: {
       build: {
@@ -49,6 +50,9 @@ module.exports = function(grunt) {
           destination: 'dist/doc'
         }
       }
+    },
+    qunit: {
+      all: ['<%= files.tests %>']
     }
   });
 
@@ -64,10 +68,16 @@ module.exports = function(grunt) {
   // Load the plugin that provides the "jsdoc" task.
   grunt.loadNpmTasks('grunt-jsdoc');
 
-  // Default task(s).
-  grunt.registerTask('default', ['clean','uglify','file_append','jsdoc']);
+  // This plugin provides the "qunit" task.
+  grunt.loadNpmTasks('grunt-contrib-qunit');
 
-  // no documentation
-  grunt.registerTask('nodoc', ['clean','ugilify','file_append']);
+  // Default task(s).
+  grunt.registerTask('default', ['clean','qunit','uglify','file_append','jsdoc']);
+
+  // build only
+  grunt.registerTask('build', ['clean','ugilify','file_append']);
+
+  // test only
+  grunt.registerTask('test', ['clean','qunit']);
 
 };
