@@ -1,15 +1,18 @@
-# PhantomFunctionalTest
+# PhantomFunctionalTest ![build status](https://travis-ci.org/bicarbon8/PhantomFunctionalTest.svg)
 a lightweight alternative to CasperJs for Functional Testing based on QUnit that adds helpful methods for interacting with PhantomJs in support of Javascript UI testing
+
+# DOCUMENTATION
+[jsdoc](https://rawgit.com/bicarbon8/PhantomFunctionalTest/master/dist/doc/index.html)
 
 # INSTALLING
 using npm you can install this framework into any existing project using te folowing:
-```npm install pft --save-dev``` (coming soon)
+```npm install pft --save-dev```
 
 or by cloning this repository and usng npm to install from the cloned directory into your project directory:
 ```your/project/dir/> npm install path/to/this/project/```
 
 # USING
-to run you must first have a standard phantomjs script you woul like to run and then use:
+to run you must first have a standard phantomjs script you would like to run and then use:
 ```> pft path/to/script.js```
 
 # FEATURES
@@ -23,7 +26,7 @@ to run you must first have a standard phantomjs script you woul like to run and 
 The basics for creating and running a test with PFT is the use of the ```PFT.tester.test``` function. This adds an asynchronous test to the queue and tracks execution and assertions.
 Ex:
 ```
-PFT.tester.test("sample test name", cases, options, function() {
+PFT.tester.test("sample test name", options, data, function(page, data, assert) {
   ... async operations ...
   PFT.tester.done(); // called from inside the callback chain
 });
