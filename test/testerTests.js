@@ -127,3 +127,61 @@ QUnit.test("calling assert.fail exits the test and update failed count", functio
 
     PFT.tester.start();
 });
+QUnit.test("calling assert.fail asynchronously exits the test and update failed count", function (assert) {
+    var done = assert.async();
+    expect(4);
+    PFT.tester.onTestCompleted = function (details) {
+        assert.ok(details.test.passes === 0);
+        assert.ok(details.test.failures.length === 1);
+        assert.ok(details.test.failures[0] === "'sample test'\n\ttest failing");
+        assert.ok(details.test.errors.length === 0);
+    };
+    PFT.tester.onExit = function (details) {
+        done();
+    };
+    PFT.tester.test("sample test", function (page, data, tassert) {
+        setTimeout(function () {
+            tassert.fail('test failing');
+        }, 500);
+    });
+
+    PFT.tester.start();
+});
+QUnit.test("javascript errors exit the test and update error count", function (assert) {
+    var done = assert.async();
+    expect(4);
+    PFT.tester.onTestCompleted = function (details) {
+        assert.ok(details.test.passes === 0);
+        assert.ok(details.test.failures.length === 0);
+        assert.ok(details.test.errors.length === 1);
+        assert.ok(details.test.errors[0]);
+    };
+    PFT.tester.onExit = function (details) {
+        done();
+    };
+    PFT.tester.test("sample test", function (page, data, tassert) {
+        does.not.exist = "no"; // expected to error
+    });
+
+    PFT.tester.start();
+});
+QUnit.test("async javascript errors exit the test and update error count", function (assert) {
+    var done = assert.async();
+    expect(4);
+    PFT.tester.onTestCompleted = function (details) {
+        assert.ok(details.test.passes === 0);
+        assert.ok(details.test.failures.length === 0);
+        assert.ok(details.test.errors.length === 1);
+        assert.ok(details.test.errors[0]);
+    };
+    PFT.tester.onExit = function (details) {
+        done();
+    };
+    PFT.tester.test("sample test", function (page, data, tassert) {
+        setTimeout(function () {
+            does.not.exist = "no"; // expected to error
+        }, 500);
+    });
+
+    PFT.tester.start();
+});

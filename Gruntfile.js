@@ -25,10 +25,10 @@ module.exports = function(grunt) {
           beautify: true,
           mangle: false,
           sourceMap: false,
-          banner: '/*! <%= pkg.name %> v<%= pkg.version %>, created by: <%= pkg.author.name %> <%= pkg.author.email %> <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %> */'
+          banner: '/*! <%= pkg.name %> v<%= pkg.version %>, created by: <%= pkg.author.name %> <%= pkg.author.email %> <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %> */\n'
         },
         files: {
-          'dist/<%= pkg.name %>-<%= pkg.version %>.js': ['<%= files.js %>']
+          'dist/<%= pkg.name %>.js': ['<%= files.js %>']
         }
       }
     },
@@ -37,8 +37,8 @@ module.exports = function(grunt) {
         files: [
           {
             append: "\nmodule ? module.exports = PFT : ;",
-            input: 'dist/<%= pkg.name %>-<%= pkg.version %>.js',
-            output: 'dist/<%= pkg.name %>-<%= pkg.version %>-module.js'
+            input: 'dist/<%= pkg.name %>.js',
+            output: 'dist/<%= pkg.name %>-module.js'
           }
         ]
       }
@@ -78,6 +78,6 @@ module.exports = function(grunt) {
   grunt.registerTask('build', ['clean','ugilify','file_append']);
 
   // test only
-  grunt.registerTask('test', ['clean','qunit']);
+  grunt.registerTask('test', ['qunit']);
 
 };
