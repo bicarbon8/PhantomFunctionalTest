@@ -1,46 +1,96 @@
 #!/usr/bin/env node
 
+/** Globals */
 var phantomjs = require('phantomjs');
-
-var userArgs = [];
-var debug = "";
-for (var i=2; i<process.argv.length; i++) {
-    var arg = process.argv[i];
-    if (arg == "--debug") {
-        debug = "--remote-debugger-port=9999 ";
-    } else {
-        userArgs.push(arg);
-    }
-}
-
 var path = require('path');
 var cwd = path.resolve(process.cwd(), '.');
-var wrapper = path.join(__dirname, '..', 'lib', 'wrapper.js');
-var pft = path.join(__dirname, '..', 'dist', 'pft.js');
-userArgs.unshift(pft);
-userArgs.unshift(wrapper);
-
+var glob = require('glob');
 var spawn = require('child_process').spawn;
-var command = phantomjs.path;
-var args = ['--ignore-ssl-errors=yes','--ssl-protocol=any'];
-if (debug !== "") {
-    args.push(debug);
+
+function parseInputArgs (inputArgs) {
+    var debug = false;
+    var threads = 1;
+    var scripts = [];
+    for (var i=2; i<inputArgs.length; i++) {
+        var arg = process.argv[i];
+        if (arg == "--debug") {
+            debug = true;
+        } else if (arg.indexOf("--parallel=") > -1) {
+            threads = parseInt(arg.substring(arg.indexOf("=") + 1), 10);
+        } else {
+            // process wildcard paths into actual files
+            var p = path.join(cwd, arg);
+            scripts.push(p);
+        }
+    }
+    if (threads > 1) {
+        debug = false; // cannot debug in parallel mode
+    }
+
+    return { debug: debug, threads: threads, scripts: scripts };
 }
-for (var s in userArgs) {
-    var userArg = userArgs[s];
-    args.push(userArg);
+
+function processScriptFilePath (options) {
+    var scripts = [];
+    for (var i=0; i<options.scripts.length; i++) {
+        var script = options.scripts[i];
+        var files = glob.sync(script);
+        for (var j=0; j<files.length; j++) {
+            scripts.push(files[j]);
+        }
+    }
+
+    return scripts;
 }
-var phantomjs = spawn(command, args, {cwd: cwd});
-// add a 'data' event listener for the spawn instance
-phantomjs.stdout.on('data', function(data) {
-    var str = data.toString(), lines = str.split(/(\r?\n)/g);
-    console.log(data.toString());
-});
-phantomjs.on('error', function(err) {
-    console.log(err);
-    process.exit(code);
-});
-// when the spawn child process exits, check if there were any errors and close the writeable stream
-phantomjs.on('exit', function(code) {
-    process.exit(code);
-});
+
+function generatePhantomArgs (options) {
+    var wrapper = path.join(__dirname, '..', 'lib', 'wrapper.js');
+    var pft = path.join(__dirname, '..', 'dist', 'pft.js');
+    var phantomArgs = ['--ignore-ssl-errors=yes','--ssl-protocol=any'];
+    if (options.debug) {
+        phantomArgs.push("--remote-debugger-port=9999");
+    }
+    phantomArgs.push(wrapper);
+    phantomArgs.push(pft);
+
+    var scripts = processScriptFilePath(options);
+    for (var i=0; i<scripts.length; i++) {
+        var script = scripts[i];
+        phantomArgs.push(script);
+    }
+
+    return phantomArgs;
+}
+
+function startProcesses (options, phantomArgs) {
+    var phantoms = [];
+    var command = phantomjs.path;
+    console.log("running: '" + command + " " + phantomArgs.join(' ') + "' using '" + options.threads + "' thread(s)");
+    for (var i=0; i<options.threads; i++) {
+        var phantom = spawn(command, phantomArgs, {cwd: cwd});
+
+        // add a 'data' event listener for the spawn instance
+        phantom.stdout.on('data', function(data) {
+            var str = data.toString(), lines = str.split(/(\r?\n)/g);
+            console.log(data.toString());
+        });
+        phantom.on('error', function(err) {
+            console.log(err);
+            process.exit(1);
+        });
+        // when the spawn child process exits, check if there were any errors and close the writeable stream
+        phantom.on('exit', function(code) {
+            process.exit(code);
+        });
+
+        phantoms.push(phantom);
+        break; // TODO: remove this when parallel is supported
+    }
+
+    return phantoms;
+}
+
+var options = parseInputArgs(process.argv);
+var phantomArgs = generatePhantomArgs(options);
+
+var processes = startProcesses(options, phantomArgs);
