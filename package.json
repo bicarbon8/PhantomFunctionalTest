@@ -1,10 +1,10 @@
 {
   "name": "pft",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Phantom Functional Test (PFT) a Functional Test Framework based on QUnit and PhantomJs supporting Javascript UI testing",
   "main": "dist/pft.js",
   "scripts": {
-    "test": "grunt -v"
+    "test": "grunt test -v"
   },
   "bin": {
     "pft": "bin/pft"

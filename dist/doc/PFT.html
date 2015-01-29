@@ -281,7 +281,7 @@ for selectors to be displayed
         <dl>
             
 <dt>
-    <h4 class="name" id="addHeader"><span class="type-signature">&lt;static> </span>addHeader<span class="signature">(page, name, value)</span><span class="type-signature"> &rarr; {PhantomJs.Webpage.Page}</span></h4>
+    <h4 class="name" id="addHeader"><span class="type-signature">&lt;static> </span>addHeader<span class="signature">(page, name, value)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -289,8 +289,8 @@ for selectors to be displayed
     
     
     <div class="description">
-        function will add headers to the passed in 'PhantomJs.Webpage.Page'
-object or overwrite them if they already exist
+        function will add a header to the passed in 'PhantomJs.Webpage.Page'
+object or overwrite an existing header with the passed in value
     </div>
     
 
@@ -418,7 +418,7 @@ on</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line69">line 69</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line95">line 95</a>
     </li></ul></dd>
     
     
@@ -439,28 +439,195 @@ on</td>
     
     
     
-    <h5>Returns:</h5>
     
+    
+</dd>
+
+        
             
-<div class="param-desc">
-    the Page object with headers updated
-</div>
+<dt>
+    <h4 class="name" id="addHeaders"><span class="type-signature">&lt;static> </span>addHeaders<span class="signature">(page, headers)</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        function will add headers to the passed in 'PhantomJs.Webpage.Page'
+object or overwrite them if they already exist
+    </div>
+    
 
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
 
-
-<dl>
-	<dt>
-		Type
-	</dt>
-	<dd>
+<table class="params">
+    <thead>
+	<tr>
 		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>page</code></td>
+            
+            
+            <td class="type">
+            
+                
 <span class="param-type">PhantomJs.Webpage.Page</span>
 
 
-	</dd>
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">the Page object to set headers
+on</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>headers</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object[]</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">an array of Objects containing a name and
+value</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>headers[].name</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">the header key such as "Accept-Language"</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>headers[].value</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">= the header value such as "en-US"</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line77">line 77</a>
+    </li></ul></dd>
+    
+    
+    
+    
+    
+    
+    
 </dl>
 
-        
+    
+    
+
+    
+
+    
+    
+    
+    
+    
     
     
 </dd>
@@ -559,7 +726,7 @@ mmm milliseconds
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line159">line 159</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line185">line 185</a>
     </li></ul></dd>
     
     
@@ -926,7 +1093,7 @@ using the returned page. Ex: [{ name: "Accept-Language", value:
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line108">line 108</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line134">line 134</a>
     </li></ul></dd>
     
     
@@ -997,7 +1164,7 @@ boolean value of 'true' passed as the last parameter
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line133">line 133</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line159">line 159</a>
     </li></ul></dd>
     
     
@@ -1114,7 +1281,7 @@ boolean value of 'true' passed as the last parameter
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line85">line 85</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line111">line 111</a>
     </li></ul></dd>
     
     
@@ -1207,7 +1374,7 @@ between the sections
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line142">line 142</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line168">line 168</a>
     </li></ul></dd>
     
     
@@ -1299,7 +1466,7 @@ between the sections
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line116">line 116</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line142">line 142</a>
     </li></ul></dd>
     
     
@@ -1369,7 +1536,7 @@ by the 'PhantomJs.Webpage.Page' objects
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line229">line 229</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line255">line 255</a>
     </li></ul></dd>
     
     
@@ -1545,7 +1712,149 @@ spaces and illegal characters
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line212">line 212</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line238">line 238</a>
+    </li></ul></dd>
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="resizeViewport"><span class="type-signature">&lt;static> </span>resizeViewport<span class="signature">(page, dimensions)</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        function will resize the passed in PhantomJs.Webpage.Page to
+the specified dimensions
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>page</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">PhantomJs.Webpage.Page</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">the Page object to resize</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>dimensions</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">an Object containing a width and
+height property set to values greater than 0</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line60">line 60</a>
     </li></ul></dd>
     
     
@@ -1615,7 +1924,7 @@ spaces and illegal characters
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line100">line 100</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line126">line 126</a>
     </li></ul></dd>
     
     
@@ -1685,7 +1994,7 @@ spaces and illegal characters
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line124">line 124</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line150">line 150</a>
     </li></ul></dd>
     
     
@@ -1732,7 +2041,7 @@ spaces and illegal characters
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Wed Jan 28 2015 21:33:07 GMT-0000 (GMT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Thu Jan 29 2015 11:06:56 GMT-0000 (GMT)
 </footer>
 
 <script> prettyPrint(); </script>

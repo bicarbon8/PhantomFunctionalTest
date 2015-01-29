@@ -1,26 +1,25 @@
-/*! pft v0.9.0, created by: Jason Holt Smith <bicarbon8@gmail.com> 2015-01-28 21:32:46 */
+/*! pft v0.9.1, created by: Jason Holt Smith <bicarbon8@gmail.com> 2015-01-29 11:06:52 */
 var PFT = {};
 
 PFT.POLLING_INTERVAL = 1e3, PFT.DEFAULT_TIMEOUT = 6e4, PFT.IMAGES_DIR = "./img/", 
 PFT.createPage = function(viewport, headers) {
     PFT.debug("generating new page...");
     var page = null;
-    if (page = require("webpage").create(), viewport || (viewport = {
+    return page = require("webpage").create(), viewport || (viewport = {
         width: 1024,
         height: 800
-    }), PFT.debug("setting viewport to: " + JSON.stringify(viewport)), page.viewportSize = viewport, 
-    headers) {
-        PFT.debug("setting headers to: " + JSON.stringify(headers));
-        for (var i = 0; i < headers.length; i++) {
-            var header = headers[i];
-            page = PFT.addHeader(page, header.name, header.value);
-        }
-    }
-    return page;
-}, PFT.addHeader = function(page, name, value) {
-    var headers = page.customHeaders;
-    return headers || (headers = {}), headers[name] = value, page.customHeaders = headers, 
+    }), PFT.resizeViewport(page, viewport), headers && PFT.addHeaders(page, headers), 
     page;
+}, PFT.resizeViewport = function(page, dimensions) {
+    PFT.debug("setting viewport to: " + JSON.stringify(dimensions)), page && dimensions && dimensions.width && dimensions.height && (page.viewportSize = dimensions);
+}, PFT.addHeaders = function(page, headers) {
+    page && headers && headers.length > 0 && headers.forEach(function(header) {
+        header.name && header.value && PFT.addHeader(page, header.name, header.value);
+    });
+}, PFT.addHeader = function(page, name, value) {
+    PFT.debug("setting header of '" + name + "' to: " + value);
+    var headers = page.customHeaders;
+    headers || (headers = {}), headers[name] = value, page.customHeaders = headers;
 }, PFT.getCookieValue = function(cookieName) {
     PFT.debug("checking for cookie '" + cookieName + "' in cookies...");
     for (var key in phantom.cookies) {
@@ -55,10 +54,10 @@ PFT.createPage = function(viewport, headers) {
         quality: "50"
     }));
 }, PFT.onPageConsoleMessage = function() {}, phantom.onError = function(msg, trace) {
-    var msgStack = [ msg ];
-    trace && trace.length && trace.forEach(function(t) {
-        msgStack.push(" -> " + (t.file || t.sourceURL) + ": " + t.line + (t["function"] ? " (in function " + t["function"] + ")" : ""));
-    }), msg = msgStack.join("\n"), PFT.tester.running && PFT.tester.outQueue.length > 0 ? (PFT.tester.outQueue[0].halt || PFT.tester.outQueue[0].errors.push(msg), 
+    var stack = "";
+    trace && trace.length > 0 ? trace.forEach(function(t) {
+        stack += "	-> " + (t.file || t.sourceURL) + ": " + t.line + (t["function"] ? " (in function " + t["function"] + ")" : "") + "\n";
+    }) : stack += "\n" + PFT.logger._getStackTrace(), msg += stack, PFT.tester.running && PFT.tester.outQueue.length > 0 ? (PFT.tester.outQueue[0].halt || PFT.tester.outQueue[0].errors.push(msg), 
     PFT.tester.done()) : (PFT.logger.log(PFT.logger.ERROR, msg, !1), PFT.tester.onError({
         message: msg
     }), phantom.exit(1));
@@ -432,7 +431,7 @@ PFT.logger = {
         for (i = 0; i < PFT.tester.outQueue.length; i++) {
             for (passes += PFT.tester.outQueue[i].passes, failures += PFT.tester.outQueue[i].failures.length, 
             errors += PFT.tester.outQueue[i].errors.length, j = 0; j < PFT.tester.outQueue[i].failures.length; j++) {
-                var failure = PFT.tester.outQueue[i].failures[i];
+                var failure = PFT.tester.outQueue[i].failures[j];
                 wroteFailures || (wroteFailures = !0, failuresMsg += "\nFAILURES:\n"), failuresMsg += "	" + failure + "\n";
             }
             for (j = 0; j < PFT.tester.outQueue[i].errors.length; j++) {
@@ -440,7 +439,7 @@ PFT.logger = {
                 wroteErrors || (wroteErrors = !0, errorsMsg += "\nERRORS:\n"), errorsMsg += "	" + error + "\n";
             }
         }
-        var msg = "Completed all tests in " + duration + " with " + passes + " passes, " + failures + " failures, " + errors + " errors.\n";
+        var msg = "Completed '" + PFT.tester.outQueue.length + "' tests in " + duration + " with " + passes + " passes, " + failures + " failures, " + errors + " errors.\n";
         msg += failuresMsg, msg += errorsMsg, PFT.logger.log(PFT.logger.TEST, msg), PFT.tester.onExit({
             message: msg
         });
