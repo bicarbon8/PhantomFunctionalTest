@@ -19,17 +19,13 @@ module.exports = function(grunt) {
         filter: 'isFile',
       },
     },
-    uglify: {
-      buildBeatified: {
-        options: {
-          beautify: true,
-          mangle: false,
-          sourceMap: false,
-          banner: '/*! <%= pkg.name %> v<%= pkg.version %>, created by: <%= pkg.author.name %> <%= pkg.author.email %> <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %> */\n'
-        },
-        files: {
-          'dist/<%= pkg.name %>.js': ['<%= files.js %>']
-        }
+    concat: {
+      options: {
+        //banner: '/*! <%= pkg.name %> v<%= pkg.version %>, created by: <%= pkg.author.name %> <%= pkg.author.email %> <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %> */\n'
+      },
+      dist: {
+        src: ['<%= files.js %>'],
+        dest: 'dist/<%= pkg.name %>.js'
       }
     },
     file_append: {
@@ -45,7 +41,7 @@ module.exports = function(grunt) {
     },
     jsdoc : {
       dist : {
-        src: ['<%= files.js %>'],
+        src: ['dist/<%= pkg.name %>.js'],
         options: {
           destination: 'dist/doc'
         }
@@ -55,9 +51,6 @@ module.exports = function(grunt) {
       all: ['<%= files.tests %>']
     }
   });
-
-  // Load the plugin that provides the "uglify" task.
-  grunt.loadNpmTasks('grunt-contrib-uglify');
 
   // Load the plugin that provides the "clean" task.
   grunt.loadNpmTasks('grunt-contrib-clean');
@@ -71,11 +64,14 @@ module.exports = function(grunt) {
   // This plugin provides the "qunit" task.
   grunt.loadNpmTasks('grunt-contrib-qunit');
 
+  // Load the plugin that provides the "concat" task.
+  grunt.loadNpmTasks('grunt-contrib-concat');
+
   // Default task(s).
-  grunt.registerTask('default', ['clean','qunit','uglify','file_append','jsdoc']);
+  grunt.registerTask('default', ['clean','qunit','concat','file_append','jsdoc']);
 
   // build only
-  grunt.registerTask('build', ['clean','ugilify','file_append']);
+  grunt.registerTask('build', ['clean','concat','file_append']);
 
   // test only
   grunt.registerTask('test', ['qunit']);
