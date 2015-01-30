@@ -313,7 +313,8 @@ phantom.onError = function(msg, trace) {
     }
 };
 
-var PFT = PFT || {};
+/** @ignore **/
+var PFT_THREAD_ID = PFT_THREAD_ID || ''; // used for parallel execution
 
 /** @namespace */
 PFT.logger = {
@@ -422,13 +423,13 @@ PFT.logger = {
             switch (levelInt) {
                 case PFT.logger.FATAL:
                 case PFT.logger.ERROR:
-                    console.error(msg);
+                    console.error(PFT_THREAD_ID + msg);
                     break;
                 case PFT.logger.WARN:
-                    console.warn(msg);
+                    console.warn(PFT_THREAD_ID + msg);
                     break;
                 default:
-                    console.log(msg);
+                    console.log(PFT_THREAD_ID + msg);
             }
         }
     },
@@ -1263,4 +1264,4 @@ if (!String.prototype.trim) {
   })();
 }
 
-module ? module.exports = PFT : ;
+module.exports = PFT;
