@@ -65,7 +65,7 @@ function generatePhantomArgs (options) {
 function startProcesses (options, phantomArgs) {
     var phantoms = [];
     var command = phantomjs.path;
-    console.log("running: '" + command + " " + phantomArgs.join(' ') + "' using '" + options.threads + "' thread(s)");
+    // console.log("running: '" + command + " " + phantomArgs.join(' ') + "' using '" + options.threads + "' thread(s)");
     for (var i=0; i<options.threads; i++) {
         var phantom = spawn(command, phantomArgs, {cwd: cwd});
 
