@@ -16,6 +16,7 @@ to run you must first have a standard phantomjs script you would like to run and
 ```> pft path/to/script.js```
 
 # FEATURES
+- multithreaded, parallel execution of scripts by simply calling with ```pft --parallel=N path/to/scripts/**/*.js``` where 'N' is some number greater than 1 (note this will spawn an instance of PhantomJs for each thread)
 - ```waitFor``` and ```waitUntil``` functions that help in ensuring selectors are present on a page
 - ```PFT.BasePage``` class which serves as a core interface with PhantomJs functions and can easily be extended to support the concept of Test [Page Objects](https://code.google.com/p/selenium/wiki/PageObjects)
 - can be used with or without node.js
