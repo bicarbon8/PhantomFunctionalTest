@@ -33,7 +33,7 @@ PFT.tester.test("sample test name", options, data, function(page, data, assert) 
 });
 ```
 Because the tests are all assumed to be asynchronous, each test must indicate back to the framework that it is complete. This can be done in several ways:
-- ```PFT.tester.done();``` indicates that all testing has complete, but does not affect the pass / fail / error counts for the test
+- ```PFT.tester.done();``` indicates that all testing has completed, but does not affect the pass / fail / error counts for the test
 - ```PFT.tester.pass();``` or ```PFT.tester.assert.pass();``` indicates that all testing has completed successfully and increments the pass count by 1
 - ```PFT.tester.fail();``` or ```PFT.tester.assert.fail();``` indicates that all testing has completed unsuccessfully and increments the fail count by 1
 - ```PFT.tester.assert.isTrue(false);``` indicates that a failure has occurred and the test should halt and increments the fail count by 1
