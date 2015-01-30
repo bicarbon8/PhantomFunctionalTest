@@ -6,11 +6,18 @@ var path = require('path');
 var cwd = path.resolve(process.cwd(), '.');
 var glob = require('glob');
 var spawn = require('child_process').spawn;
+var errors = 0;
+var runningThreads = 0;
+var startTime = new Date().getTime();
 
 function parseInputArgs (inputArgs) {
     var debug = false;
     var threads = 1;
     var scripts = [];
+    if (inputArgs.length < 2) {
+        console.log('ERROR: invalid number of arguments: "' + inputArgs.join(' ') + '"');
+        process.exit(1);
+    }
     for (var i=2; i<inputArgs.length; i++) {
         var arg = process.argv[i];
         if (arg == "--debug") {
@@ -31,12 +38,21 @@ function parseInputArgs (inputArgs) {
 }
 
 function processScriptFilePath (options) {
-    var scripts = [];
-    for (var i=0; i<options.scripts.length; i++) {
+    var threads = options.threads,
+        scripts = new Array(threads),
+        i;
+    for (i=0; i<scripts.length; i++) {
+        scripts[i] = [];
+    }
+    var s = 0;
+    for (i=0; i<options.scripts.length; i++) {
         var script = options.scripts[i];
         var files = glob.sync(script);
         for (var j=0; j<files.length; j++) {
-            scripts.push(files[j]);
+            scripts[s++].push(files[j]);
+            if (s >= threads) {
+                s = 0;
+            }
         }
     }
 
@@ -53,44 +69,109 @@ function generatePhantomArgs (options) {
     phantomArgs.push(wrapper);
     phantomArgs.push(pft);
 
-    var scripts = processScriptFilePath(options);
-    for (var i=0; i<scripts.length; i++) {
-        var script = scripts[i];
-        phantomArgs.push(script);
-    }
-
     return phantomArgs;
 }
 
-function startProcesses (options, phantomArgs) {
+function startProcesses (options, phantomArgs, scriptsArray) {
     var phantoms = [];
     var command = phantomjs.path;
-    // console.log("running: '" + command + " " + phantomArgs.join(' ') + "' using '" + options.threads + "' thread(s)");
+    /* jshint loopfunc:true */
     for (var i=0; i<options.threads; i++) {
-        var phantom = spawn(command, phantomArgs, {cwd: cwd});
+        var args = [],
+            j;
+        for (j=0; j<phantomArgs.length; j++) {
+            args.push(phantomArgs[j]);
+        }
+        var scripts = scriptsArray[i];
+        for (j=0; j<scripts.length; j++) {
+            args.push(scripts[j]);
+        }
 
-        // add a 'data' event listener for the spawn instance
+        runningThreads++;
+        if (options.threads > 1) {
+            args.push('PFT_THREAD_ID_' + (i + 1));
+        }
+
+        // Spawn the Phantom thread
+        var phantom = spawn(command, args, {cwd: cwd});
+
+        // add a 'data' event listener for the spawned instance
         phantom.stdout.on('data', function(data) {
-            var str = data.toString(), lines = str.split(/(\r?\n)/g);
             console.log(data.toString());
         });
         phantom.on('error', function(err) {
+            errors++;
             console.log(err);
-            process.exit(1);
+            runningThreads--;
+            if (runningThreads === 0) {
+                process.exit(1);
+            }
         });
-        // when the spawn child process exits, check if there were any errors and close the writeable stream
         phantom.on('exit', function(code) {
-            process.exit(code);
+            if (code !== 0) {
+                errors += code;
+            }
+            var exitCode = (errors > 0) ? errors : code;
+            runningThreads--;
+            if (runningThreads === 0) {
+                if (options.threads > 1) {
+                    console.log("All threads completed with total of '" + errors + "' failures / errors in: " + convertMsToHumanReadable(new Date().getTime() - startTime));
+                }
+                process.exit(exitCode);
+            }
         });
 
         phantoms.push(phantom);
-        break; // TODO: remove this when parallel is supported
     }
 
     return phantoms;
 }
 
+function convertMsToHumanReadable (milliseconds) {
+    var date = new Date(milliseconds);
+    var h = date.getHours();
+    var m = date.getMinutes();
+    var s = date.getSeconds();
+    var ms = date.getMilliseconds();
+    var out = "";
+
+    if(h > 0) {
+        out+=h;
+        if(h==1) {
+            out+=" hour ";
+        } else {
+            out+=" hours ";
+        }
+    }
+    if(m > 0) {
+        out+=m;
+        if(m==1) {
+            out+=" minute ";
+        } else {
+            out+=" minutes ";
+        }
+    }
+    if(s > 0) {
+        out+=s;
+        if(s==1) {
+            out+=" second ";
+        } else {
+            out+=" seconds ";
+        }
+    }
+    if(ms > 0) {
+        out+=ms;
+        if(ms==1) {
+            out+=" millisecond";
+        } else {
+            out+=" milliseconds";
+        }
+    }
+
+    return out;
+}
+
 var options = parseInputArgs(process.argv);
 var phantomArgs = generatePhantomArgs(options);
-
-var processes = startProcesses(options, phantomArgs);
+var scriptsArray = processScriptFilePath(options);
+var processes = startProcesses(options, phantomArgs, scriptsArray);

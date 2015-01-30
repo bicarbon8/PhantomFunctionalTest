@@ -11,7 +11,7 @@ module.exports = function(grunt) {
         "lib/pft/objects/tester.js",
         "lib/pft/polyfills.js",
       ],
-      tests: "test/tests.html"
+      tests: "test/qunit/tests.html"
     },
     clean: {
       build: {
@@ -32,7 +32,7 @@ module.exports = function(grunt) {
       default_options: {
         files: [
           {
-            append: "\nmodule ? module.exports = PFT : ;",
+            append: "\nmodule.exports = PFT;",
             input: 'dist/<%= pkg.name %>.js',
             output: 'dist/<%= pkg.name %>-module.js'
           }
