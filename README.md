@@ -56,6 +56,8 @@ PFT.tester.test("sample test name", options, data, function(page, data, assert) 
     });
   });
 });
+
+PFT.tester.start(); // must be called to begin running tests
 ```
 ### Extending PFT.BasePage
 The ```PFT.BasePage``` class can be easily extended to help model your page objects. Ex:
