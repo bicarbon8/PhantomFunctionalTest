@@ -53,17 +53,23 @@ var PFT = {};
 /**
  * property specifying the delay between retries when waiting
  * for selectors to be displayed
+ * @property {number} [PFT.POLLING_INTERVAL=1000] - the number of milliseconds
+ * between retries used in any polling like {@link PFT.BasePage.waitFor}
  */
 PFT.POLLING_INTERVAL = 1000; // 1 second
 
 /**
  * property used as a default wait timeout in the 'PFT.tester' module
+ * @property {number} [PFT.DEFAULT_TIMEOUT=60000] - the number of milliseconds
+ * used by default for any waiting like {@link PFT.BasePage.waitFor}
  */
 PFT.DEFAULT_TIMEOUT = 60000; // 1 minute
 
 /**
  * property defining the base directory used with 'PFT.renderPage' and
  * 'PFT.BasePage.renderPage' calls
+ * @property {string} [PFT.IMAGES_DIR='./img/'] - the default directory where
+ * any images will be written
  */
 PFT.IMAGES_DIR = './img/';
 
@@ -732,6 +738,11 @@ PFT.BasePage.prototype.elementPosition = function(selector) {
     }
 };
 
+/**
+ * function will issue a PhantomJs click event on the specified selector
+ * @param {string} selector - the CSS selector to use in identifying which
+ * element to click
+ */
 PFT.BasePage.prototype.click = function(selector) {
     PFT.debug("clicking on: '"+selector+"'...");
     var pos = this.elementPosition(selector);
@@ -754,6 +765,12 @@ PFT.BasePage.prototype.click = function(selector) {
     }, selector);
 };
 
+/**
+ * function will return the text content of the specified element.
+ * @param {string} selector - the CSS selector to use in identifying which
+ * element to return the text content from within. The returned text will be
+ * from the specified element and any child elements and will not include HTML
+ */
 PFT.BasePage.prototype.getText = function (selector) {
     PFT.debug("getting textContent for: '" + selector + "'...");
     /* jshint evil:true */
@@ -766,43 +783,36 @@ PFT.BasePage.prototype.getAttribute = function(selector, attribute) {
     return this.eval(function(s, a) { return document.querySelector(s).getAttribute(a); }, selector.toString(), attribute);
 };
 
-PFT.BasePage.prototype.sendKeys = function(selector, value, callback) {
+/**
+ * function will place focus on the specified selector and then send a keydown
+ * followed by a keyup event for each character of the passed in value string.
+ * when completed the callback will be called with a value of true
+ * @param {string} selector - the CSS selector to use in identifying which
+ * element will have focus for the keys
+ * @param {string} value - the text string to be typed
+ * @param {Function} callback - the callback function to be called after all
+ * characters have been sent
+ * @param {Integer} [keyDelay=25] - the delay in milliseconds between each
+ * keypress
+ */
+PFT.BasePage.prototype.sendKeys = function(selector, value, callback, keyDelay) {
+    var delay = keyDelay || 25;
     try {
         if(value) {
             var character = value.substring(0,1);
             PFT.trace("appending value of '" + character + "' to: '" + selector + "'");
             value = value.substring(1, value.length);
             /* jshint evil:true */
-            this.eval(function(s) {
-                var evt;
-                function fireEvent(element, event) {
-                    if (document.createEventObject) {
-                        // dispatch for IE
-                        evt = document.createEventObject();
-                        return element.fireEvent('on'+event, evt);
-                    } else if(document.createEvent) {
-                        // dispatch for firefox + others
-                        evt = document.createEvent("HTMLEvents");
-                        evt.initEvent(event, true, true); // event type, bubbling, cancelable
-                        return !element.dispatchEvent(evt);
-                    } else {
-                        // use for new browsers
-                        evt = new Event(event);
-                        return element.dispatchEvent(evt);
-                    }
-                }
-                var el = document.querySelector(s.sel);
-                el.value = el.value+s.ch;
-                fireEvent(el, 'keydown');
-                fireEvent(el, 'keyup');
-                fireEvent(el, 'focus');
-            }, { "sel": selector, "ch": character });
+            this.eval(function (s) {
+                document.querySelector(s).focus();
+            }, selector.toString());
+            this.page.sendEvent('keydown', character);
             this.page.sendEvent('keyup', character);
 
             if(value.length > 0) {
                 setTimeout(function afterSendKey() {
                     this.sendKeys(selector, value, callback);
-                }.bind(this), 25);
+                }.bind(this), delay);
             } else {
                 callback.call(this, true);
             }
@@ -825,6 +835,15 @@ PFT.BasePage.prototype.setCheckboxState = function(selector, enabled) {
     }
 };
 
+/**
+ * function will evaluate the passed in javascript function within the page. Any
+ * arguments passed in after the function will be passed as arguments to the
+ * function
+ * @param {Function} script - the javascript function to be evaluated on the
+ * page
+ * @param {Object} arguments - an object to be passed to the function when
+ * executed
+ */
 /* jshint evil:true */
 PFT.BasePage.prototype.eval = function() {
     if (arguments && arguments.length > 0) {
@@ -853,7 +872,8 @@ PFT.BasePage.prototype.extend = function(module) {
 /** @namespace */
 PFT.tester = {
     /**
-     * property representing the global test timeout value in milliseconds.
+     * @property {number} [timeOutAfter=PFT.DEFAULT_TIMEOUT] - the default max
+     * amount of time allowed for tests to run before they are marked as a fail.
      * this can be overridden for a specific test by passing a 'maxDuration'
      * option to the {@link PFT.tester.test} function
      */
@@ -869,8 +889,8 @@ PFT.tester = {
     inQueue: [],
 
     /**
-     * property tracking the currently running task as index 0 and
-     * any previously executed tasks as the subsequent indeces
+     * @property {Array} outQueue - the array of running and already run tasks
+     * where index 0 is the currently running task
      */
     outQueue: [],
 
@@ -883,24 +903,16 @@ PFT.tester = {
     /** @ignore */
     globalStartTime: null,
 
-    /**
-     * enum property representing a suite type
-     */
+    /** @ignore */
     SUITE: 0,
 
-    /**
-     * enum property representing a setup type
-     */
+    /** @ignore */
     SETUP: 1,
 
-    /**
-     * enum property representing a test type
-     */
+    /** @ignore */
     TEST: 2,
 
-    /**
-     * enum property representing a teardown type
-     */
+    /** @ignore */
     TEARDOWN: 3,
 
     /** @ignore */
@@ -1026,11 +1038,29 @@ PFT.tester = {
             }
         },
 
+        /**
+         * function to test the value of a passed in boolean is false
+         * and to signal a halt to the current test if it is not.
+         * function will also call {@link PFT.tester.done} so that any
+         * subsequent tests can continue. triggers the {@link PFT.tester.onAssertionFailure}
+         * function call if passed in value is true
+         * @param {boolean} value - the boolean value to be compared to 'false'
+         * @param {string} message - a message to display describing the failure in the
+         * case of a failed comparison. this message is referenced in the current test as well
+         * as globally in {@link PFT.tester.failures}
+         */
         isFalse: function (value, message) {
             var m = message || "expected 'false' but was 'true'";
             PFT.tester.assert.isTrue(!value, message);
         },
 
+        /**
+         * function to signal a successful completion of a test and increment
+         * the current number of passes by 1.
+         * function will also call {@link PFT.tester.done} so that any
+         * subsequent tests can continue.
+         * @param {string} message - a message to display describing the pass.
+         */
         pass: function (message) {
             var m = message || PFT.tester.outQueue[0].name;
             PFT.logger.log(PFT.logger.TEST, "PASS: " + m);
@@ -1038,6 +1068,13 @@ PFT.tester = {
             PFT.tester.done();
         },
 
+        /**
+         * function to signal a failed completion of a test and increment
+         * the current number of failures by 1.
+         * function will also call {@link PFT.tester.done} so that any
+         * subsequent tests can continue.
+         * @param {string} message - a message to display describing the pass.
+         */
         fail: function (message) {
             var m = message || PFT.tester.outQueue[0].name;
             PFT.logger.log(PFT.logger.TEST, "FAIL: " + m, true);
@@ -1046,10 +1083,16 @@ PFT.tester = {
         },
     },
 
+    /**
+     * function calls to {@link PFT.tester.assert.pass}
+     */
     pass: function (message) {
         PFT.tester.assert.pass(message);
     },
 
+    /**
+     * function calls to {@link PFT.tester.assert.fail}
+     */
     fail: function (message) {
         PFT.tester.assert.fail(message);
     },
@@ -1116,12 +1159,14 @@ PFT.tester = {
                 PFT.tester.outQueue[0].failures.length + " failures, " + PFT.tester.outQueue[0].errors.length + " errors.";
             PFT.logger.log(PFT.logger.TEST, msg);
         }
-        PFT.tester.ready = true;
+
         if (PFT.tester.outQueue[0].type === PFT.tester.TEST) {
             PFT.tester.remainingCount--;
             PFT.tester.outQueue[0].page.close();
             PFT.tester.onTestCompleted({ test: PFT.tester.outQueue[0] });
         }
+
+        PFT.tester.ready = true;
     },
 
     /**
@@ -1184,6 +1229,8 @@ PFT.tester = {
 
     /**
      * function hook that is called when a new test is started
+     * @param {Object} details - an object containing a 'test' property for the
+     * currently started test object
      */
     onTestStarted: function (details) {
         // hook for testing
@@ -1191,6 +1238,8 @@ PFT.tester = {
 
     /**
      * function hook that is called when a new suite is started
+     * @param {Object} details - an object containing a 'suite' property with
+     * the current suite's name
      */
     onSuiteStarted: function (details) {
         // hook for testing
@@ -1200,6 +1249,8 @@ PFT.tester = {
      * function hook that is called when a test completes. this
      * includes anything resulting in {@link PFT.tester.done}
      * being called
+     * @param {Object} details - an object containing a 'test' property for the
+     * currently started test object
      */
     onTestCompleted: function (details) {
         // hook for testing
@@ -1229,6 +1280,9 @@ PFT.tester = {
 
     /**
      * function hook that is called when an assertion fails
+     * @param {Object} details - an object containing a 'test' property for the
+     * currently started test object and a 'message' property for the failure
+     * message
      */
     onAssertionFailure: function (details) {
         // hook for testing
@@ -1306,7 +1360,7 @@ if (!String.prototype.trim) {
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Fri Jan 30 2015 16:22:33 GMT-0000 (GMT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Tue Feb 03 2015 15:56:53 GMT-0000 (GMT)
 </footer>
 
 <script> prettyPrint(); </script>
