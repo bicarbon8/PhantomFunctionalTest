@@ -26,17 +26,23 @@ var PFT = {};
 /**
  * property specifying the delay between retries when waiting
  * for selectors to be displayed
+ * @property {number} [PFT.POLLING_INTERVAL=1000] - the number of milliseconds
+ * between retries used in any polling like {@link PFT.BasePage.waitFor}
  */
 PFT.POLLING_INTERVAL = 1000; // 1 second
 
 /**
  * property used as a default wait timeout in the 'PFT.tester' module
+ * @property {number} [PFT.DEFAULT_TIMEOUT=60000] - the number of milliseconds
+ * used by default for any waiting like {@link PFT.BasePage.waitFor}
  */
 PFT.DEFAULT_TIMEOUT = 60000; // 1 minute
 
 /**
  * property defining the base directory used with 'PFT.renderPage' and
  * 'PFT.BasePage.renderPage' calls
+ * @property {string} [PFT.IMAGES_DIR='./img/'] - the default directory where
+ * any images will be written
  */
 PFT.IMAGES_DIR = './img/';
 
@@ -839,7 +845,8 @@ PFT.BasePage.prototype.extend = function(module) {
 /** @namespace */
 PFT.tester = {
     /**
-     * property representing the global test timeout value in milliseconds.
+     * @property {number} [timeOutAfter=PFT.DEFAULT_TIMEOUT] - the default max
+     * amount of time allowed for tests to run before they are marked as a fail.
      * this can be overridden for a specific test by passing a 'maxDuration'
      * option to the {@link PFT.tester.test} function
      */
@@ -855,8 +862,8 @@ PFT.tester = {
     inQueue: [],
 
     /**
-     * property tracking the currently running task as index 0 and
-     * any previously executed tasks as the subsequent indeces
+     * @property {Array} outQueue - the array of running and already run tasks
+     * where index 0 is the currently running task
      */
     outQueue: [],
 
@@ -869,24 +876,16 @@ PFT.tester = {
     /** @ignore */
     globalStartTime: null,
 
-    /**
-     * enum property representing a suite type
-     */
+    /** @ignore */
     SUITE: 0,
 
-    /**
-     * enum property representing a setup type
-     */
+    /** @ignore */
     SETUP: 1,
 
-    /**
-     * enum property representing a test type
-     */
+    /** @ignore */
     TEST: 2,
 
-    /**
-     * enum property representing a teardown type
-     */
+    /** @ignore */
     TEARDOWN: 3,
 
     /** @ignore */
@@ -1012,11 +1011,29 @@ PFT.tester = {
             }
         },
 
+        /**
+         * function to test the value of a passed in boolean is false
+         * and to signal a halt to the current test if it is not.
+         * function will also call {@link PFT.tester.done} so that any
+         * subsequent tests can continue. triggers the {@link PFT.tester.onAssertionFailure}
+         * function call if passed in value is true
+         * @param {boolean} value - the boolean value to be compared to 'false'
+         * @param {string} message - a message to display describing the failure in the
+         * case of a failed comparison. this message is referenced in the current test as well
+         * as globally in {@link PFT.tester.failures}
+         */
         isFalse: function (value, message) {
             var m = message || "expected 'false' but was 'true'";
             PFT.tester.assert.isTrue(!value, message);
         },
 
+        /**
+         * function to signal a successful completion of a test and increment
+         * the current number of passes by 1.
+         * function will also call {@link PFT.tester.done} so that any
+         * subsequent tests can continue.
+         * @param {string} message - a message to display describing the pass.
+         */
         pass: function (message) {
             var m = message || PFT.tester.outQueue[0].name;
             PFT.logger.log(PFT.logger.TEST, "PASS: " + m);
@@ -1024,6 +1041,13 @@ PFT.tester = {
             PFT.tester.done();
         },
 
+        /**
+         * function to signal a failed completion of a test and increment
+         * the current number of failures by 1.
+         * function will also call {@link PFT.tester.done} so that any
+         * subsequent tests can continue.
+         * @param {string} message - a message to display describing the pass.
+         */
         fail: function (message) {
             var m = message || PFT.tester.outQueue[0].name;
             PFT.logger.log(PFT.logger.TEST, "FAIL: " + m, true);
@@ -1032,10 +1056,16 @@ PFT.tester = {
         },
     },
 
+    /**
+     * function calls to {@link PFT.tester.assert.pass}
+     */
     pass: function (message) {
         PFT.tester.assert.pass(message);
     },
 
+    /**
+     * function calls to {@link PFT.tester.assert.fail}
+     */
     fail: function (message) {
         PFT.tester.assert.fail(message);
     },
@@ -1102,12 +1132,14 @@ PFT.tester = {
                 PFT.tester.outQueue[0].failures.length + " failures, " + PFT.tester.outQueue[0].errors.length + " errors.";
             PFT.logger.log(PFT.logger.TEST, msg);
         }
-        PFT.tester.ready = true;
+
         if (PFT.tester.outQueue[0].type === PFT.tester.TEST) {
             PFT.tester.remainingCount--;
             PFT.tester.outQueue[0].page.close();
             PFT.tester.onTestCompleted({ test: PFT.tester.outQueue[0] });
         }
+
+        PFT.tester.ready = true;
     },
 
     /**
@@ -1170,6 +1202,8 @@ PFT.tester = {
 
     /**
      * function hook that is called when a new test is started
+     * @param {Object} details - an object containing a 'test' property for the
+     * currently started test object
      */
     onTestStarted: function (details) {
         // hook for testing
@@ -1177,6 +1211,8 @@ PFT.tester = {
 
     /**
      * function hook that is called when a new suite is started
+     * @param {Object} details - an object containing a 'suite' property with
+     * the current suite's name
      */
     onSuiteStarted: function (details) {
         // hook for testing
@@ -1186,6 +1222,8 @@ PFT.tester = {
      * function hook that is called when a test completes. this
      * includes anything resulting in {@link PFT.tester.done}
      * being called
+     * @param {Object} details - an object containing a 'test' property for the
+     * currently started test object
      */
     onTestCompleted: function (details) {
         // hook for testing
@@ -1215,6 +1253,9 @@ PFT.tester = {
 
     /**
      * function hook that is called when an assertion fails
+     * @param {Object} details - an object containing a 'test' property for the
+     * currently started test object and a 'message' property for the failure
+     * message
      */
     onAssertionFailure: function (details) {
         // hook for testing
