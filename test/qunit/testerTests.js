@@ -6,21 +6,9 @@ QUnit.module("PFT.tester", {
         PFT.tester._reset();
     }
 });
-QUnit.test("can add a suite", function (assert) {
-    var done = assert.async();
-    PFT.tester.suite("sample suite");
-    PFT.tester.onSuiteStarted = function (details) {
-        assert.ok(details.suite === "sample suite");
-    };
-    PFT.tester.onExit = function (details) {
-        done();
-    };
-
-    PFT.tester.start();
-});
 QUnit.test("can add a test with no options or data", function (assert) {
     var done = assert.async();
-    expect(7);
+    expect(6);
     PFT.tester.onTestStarted = function (details) {
         assert.ok(details.test.name === "sample test");
     };
@@ -30,21 +18,18 @@ QUnit.test("can add a test with no options or data", function (assert) {
     PFT.tester.onExit = function (details) {
         done();
     };
-    PFT.tester.test("sample test", function (page, data, tassert) {
+    PFT.tester.run("sample test", function (page, tassert) {
         assert.ok(page, "expected page to be valid but was: " + page);
         assert.ok(page.open, "expected page to have the open method but did not");
-        assert.ok(data === undefined, "expected data to be undefined, but was: " + data);
         assert.ok(tassert, "expected a valid assert object but was: " + tassert);
         assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object but did not");
 
-        PFT.tester.done();
+        tassert.done();
     });
-
-    PFT.tester.start();
 });
 QUnit.test("can add a test with valid data and no options", function (assert) {
     var done = assert.async();
-    expect(8);
+    expect(6);
     PFT.tester.onTestStarted = function (details) {
         assert.ok(details.test.name === "sample test");
     };
@@ -54,23 +39,19 @@ QUnit.test("can add a test with valid data and no options", function (assert) {
     PFT.tester.onExit = function (details) {
         done();
     };
-    PFT.tester.test("sample test", undefined, { sample: "foo" }, function (page, data, tassert) {
+    PFT.tester.run("sample test", function (page, tassert) {
         assert.ok(page, "expected page to be valid but was: " + page);
         assert.ok(page.open, "expected page to have the open method but did not");
-        assert.ok(data, "expected data to be an object but was: " + data);
-        assert.ok(data.sample === "foo", "expected data to have a property called sample that is equal to 'foo' but was: " + data.sample);
         assert.ok(tassert, "expected a valid assert object but was: " + tassert);
         assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object but did not");
 
-        PFT.tester.done();
+        tassert.done();
     });
-
-    PFT.tester.start();
 });
 QUnit.test("can add a test with option.maxDuration and timeout", function (assert) {
     var done = assert.async();
     var start = new Date().getTime();
-    expect(8);
+    expect(7);
     PFT.tester.onTestStarted = function (details) {
         assert.ok(details.test.name === "sample test");
     };
@@ -82,15 +63,13 @@ QUnit.test("can add a test with option.maxDuration and timeout", function (asser
     PFT.tester.onExit = function (details) {
         done();
     };
-    PFT.tester.test("sample test", { maxDuration: 1000 }, undefined, function (page, data, tassert) {
+    PFT.tester.run("sample test", function (page, tassert) {
         assert.ok(page, "expected page to be valid but was: " + page);
         assert.ok(page.open, "expected page to have the open method but did not");
-        assert.ok(data === undefined, "expected data to be undefined, but was: " + data);
         assert.ok(tassert, "expected a valid assert object but was: " + tassert);
         assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object but did not");
-    });
-
-    PFT.tester.start();
+        tassert.done();
+    }, 1000);
 });
 QUnit.test("calling assert.pass exits the test and update passed count", function (assert) {
     var done = assert.async();
@@ -103,11 +82,9 @@ QUnit.test("calling assert.pass exits the test and update passed count", functio
     PFT.tester.onExit = function (details) {
         done();
     };
-    PFT.tester.test("sample test", function (page, data, tassert) {
+    PFT.tester.run("sample test", function (page, tassert) {
         tassert.pass('test passing');
     });
-
-    PFT.tester.start();
 });
 QUnit.test("calling assert.fail exits the test and update failed count", function (assert) {
     var done = assert.async();
@@ -121,11 +98,9 @@ QUnit.test("calling assert.fail exits the test and update failed count", functio
     PFT.tester.onExit = function (details) {
         done();
     };
-    PFT.tester.test("sample test", function (page, data, tassert) {
+    PFT.tester.run("sample test", function (page, tassert) {
         tassert.fail('test failing');
     });
-
-    PFT.tester.start();
 });
 QUnit.test("calling assert.fail asynchronously exits the test and update failed count", function (assert) {
     var done = assert.async();
@@ -139,13 +114,11 @@ QUnit.test("calling assert.fail asynchronously exits the test and update failed 
     PFT.tester.onExit = function (details) {
         done();
     };
-    PFT.tester.test("sample test", function (page, data, tassert) {
+    PFT.tester.run("sample test", function (page, tassert) {
         setTimeout(function () {
             tassert.fail('test failing');
         }, 500);
     });
-
-    PFT.tester.start();
 });
 QUnit.test("javascript errors exit the test and update error count", function (assert) {
     var done = assert.async();
@@ -159,11 +132,9 @@ QUnit.test("javascript errors exit the test and update error count", function (a
     PFT.tester.onExit = function (details) {
         done();
     };
-    PFT.tester.test("sample test", function (page, data, tassert) {
+    PFT.tester.run("sample test", function (page, tassert) {
         does.not.exist = "no"; // expected to error
     });
-
-    PFT.tester.start();
 });
 QUnit.test("async javascript errors exit the test and update error count", function (assert) {
     var done = assert.async();
@@ -177,11 +148,9 @@ QUnit.test("async javascript errors exit the test and update error count", funct
     PFT.tester.onExit = function (details) {
         done();
     };
-    PFT.tester.test("sample test", function (page, data, tassert) {
+    PFT.tester.run("sample test", function (page, tassert) {
         setTimeout(function () {
             does.not.exist = "no"; // expected to error
         }, 500);
     });
-
-    PFT.tester.start();
 });
