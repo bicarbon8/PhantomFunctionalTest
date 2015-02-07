@@ -29,8 +29,9 @@
   },
   "homepage": "https://github.com/bicarbon8/PhantomFunctionalTest",
   "dependencies": {
-    "phantomjs": "~1.9.7",
-    "glob": "^4.3.5"
+    "glob": "^4.3.5",
+    "mutexjs": "^1.0.0",
+    "phantomjs": "~1.9.7"
   },
   "devDependencies": {
     "grunt": "~0.4.5",
