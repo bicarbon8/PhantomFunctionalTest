@@ -6,7 +6,7 @@ var console = {
         console.records.push(arguments);
     },
     warn: function () {
-        tmpConsole.warn(arguments);
+        tmpConsole.warn(JSON.stringify(arguments));
     },
     error: function () {
         tmpConsole.error(console.records.join('\n'), arguments);

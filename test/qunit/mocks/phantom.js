@@ -51,6 +51,8 @@ var require = function (name) {
             return system;
         case 'webpage':
             return webpage;
+		case '../node_modules/mutexjs/dist/mutex.min.js':
+			return MutexJs;
     }
 };
 
