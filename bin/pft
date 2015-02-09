@@ -67,6 +67,7 @@ function generatePhantomArgs (options) {
         phantomArgs.push("--remote-debugger-port=9999");
     }
     phantomArgs.push(wrapper);
+    phantomArgs.push(require.resolve('mutexjs'));
     phantomArgs.push(pft);
 
     return phantomArgs;
