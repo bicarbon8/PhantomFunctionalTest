@@ -64,7 +64,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line846">line 846</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line857">line 857</a>
     </li></ul></dd>
     
     
@@ -101,108 +101,6 @@
         <h3 class="subsection-title">Members</h3>
         
         <dl>
-            
-<dt>
-    <h4 class="name" id="outQueue"><span class="type-signature">&lt;static> </span>outQueue<span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    
-
-    
-<dl class="details">
-    
-        
-        <h5 class="subsection-title">Properties:</h5>
-        
-        <dl>
-
-<table class="props">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-		
-		<th>Type</th>
-		
-		
-		
-		
-		
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-	
-	<tbody>
-	
-	
-        <tr>
-            
-                <td class="name"><code>outQueue</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">Array</span>
-
-
-            
-            </td>
-            
-            
-            
-            
-            
-            <td class="description last">the array of running and already run tasks
-where index 0 is the currently running task</td>
-        </tr>
-	
-	
-	</tbody>
-</table></dl>
-        
-    
-        
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line868">line 868</a>
-    </li></ul></dd>
-    
-    
-    
-    
-    
-    
-    
-</dl>
-
-    
-    
-</dd>
-
-        
             
 <dt>
     <h4 class="name" id="timeOutAfter"><span class="type-signature">&lt;static> </span>timeOutAfter<span class="type-signature"></span></h4>
@@ -281,7 +179,7 @@ where index 0 is the currently running task</td>
             <td class="description last">the default max
 amount of time allowed for tests to run before they are marked as a fail.
 this can be overridden for a specific test by passing a 'maxDuration'
-option to the <a href="PFT.tester.html#test">PFT.tester.test</a> function</td>
+option to the PFT.tester.test function</td>
         </tr>
 	
 	
@@ -309,7 +207,7 @@ option to the <a href="PFT.tester.html#test">PFT.tester.test</a> function</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line853">line 853</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line864">line 864</a>
     </li></ul></dd>
     
     
@@ -333,7 +231,7 @@ option to the <a href="PFT.tester.html#test">PFT.tester.test</a> function</td>
         <dl>
             
 <dt>
-    <h4 class="name" id="done"><span class="type-signature">&lt;static> </span>done<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="closeTest"><span class="type-signature">&lt;static> </span>closeTest<span class="signature">()</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -341,9 +239,10 @@ option to the <a href="PFT.tester.html#test">PFT.tester.test</a> function</td>
     
     
     <div class="description">
-        function to be called at the end of asynchronous test, setup and tearDown.
-This indicates that the next scheduled item can be executed. Only call this
-function when all tasks are complete within a <a href="PFT.tester.html#test">PFT.tester.test</a>
+        function will close out the currently running test objects, but any async
+tasks will continue running. to exit these tasks you must use the
+assert.done, {@link assert.pass} or assert.fail methods
+which will exit all test execution and move to the next test.
     </div>
     
 
@@ -376,7 +275,7 @@ function when all tasks are complete within a <a href="PFT.tester.html#test">PFT
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1127">line 1127</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1142">line 1142</a>
     </li></ul></dd>
     
     
@@ -404,7 +303,7 @@ function when all tasks are complete within a <a href="PFT.tester.html#test">PFT
         
             
 <dt>
-    <h4 class="name" id="fail"><span class="type-signature">&lt;static> </span>fail<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="currentSuite"><span class="type-signature">&lt;static> </span>currentSuite<span class="signature">()</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -412,7 +311,8 @@ function when all tasks are complete within a <a href="PFT.tester.html#test">PFT
     
     
     <div class="description">
-        function calls to <a href="PFT.tester.assert.html#fail">PFT.tester.assert.fail</a>
+        function will get the current suite in use. this is primarily used for
+associating a suite with a test
     </div>
     
 
@@ -445,7 +345,76 @@ function when all tasks are complete within a <a href="PFT.tester.html#test">PFT
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1069">line 1069</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line936">line 936</a>
+    </li></ul></dd>
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="currentTest"><span class="type-signature">&lt;static> </span>currentTest<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        function will get the currently executing test
+    </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line947">line 947</a>
     </li></ul></dd>
     
     
@@ -564,7 +533,7 @@ message</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1260">line 1260</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1275">line 1275</a>
     </li></ul></dd>
     
     
@@ -633,7 +602,7 @@ message</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1243">line 1243</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1258">line 1258</a>
     </li></ul></dd>
     
     
@@ -702,7 +671,7 @@ message</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1267">line 1267</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1282">line 1282</a>
     </li></ul></dd>
     
     
@@ -772,125 +741,7 @@ experiences an error
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1236">line 1236</a>
-    </li></ul></dd>
-    
-    
-    
-    
-    
-    
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="onSuiteStarted"><span class="type-signature">&lt;static> </span>onSuiteStarted<span class="signature">(details)</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        function hook that is called when a new suite is started
-    </div>
-    
-
-    
-    
-    
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-		
-		<th>Type</th>
-		
-		
-		
-		
-		
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-	
-	<tbody>
-	
-	
-        <tr>
-            
-                <td class="name"><code>details</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-            
-            
-            
-            
-            
-            <td class="description last">an object containing a 'suite' property with
-the current suite's name</td>
-        </tr>
-	
-	
-	</tbody>
-</table>
-    
-    
-    
-<dl class="details">
-    
-        
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1217">line 1217</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1251">line 1251</a>
     </li></ul></dd>
     
     
@@ -927,7 +778,7 @@ the current suite's name</td>
     
     <div class="description">
         function hook that is called when a test completes. this
-includes anything resulting in <a href="PFT.tester.html#done">PFT.tester.done</a>
+includes anything resulting in PFT.tester.done
 being called
     </div>
     
@@ -1010,7 +861,7 @@ currently started test object</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1228">line 1228</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1243">line 1243</a>
     </li></ul></dd>
     
     
@@ -1128,7 +979,7 @@ currently started test object</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1208">line 1208</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1232">line 1232</a>
     </li></ul></dd>
     
     
@@ -1197,7 +1048,7 @@ currently started test object</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1250">line 1250</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1265">line 1265</a>
     </li></ul></dd>
     
     
@@ -1225,287 +1076,7 @@ currently started test object</td>
         
             
 <dt>
-    <h4 class="name" id="pass"><span class="type-signature">&lt;static> </span>pass<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        function calls to <a href="PFT.tester.assert.html#pass">PFT.tester.assert.pass</a>
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-        
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1062">line 1062</a>
-    </li></ul></dd>
-    
-    
-    
-    
-    
-    
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="start"><span class="type-signature">&lt;static> </span>start<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        function that will start the execution of all tests added through the
-<a href="PFT.tester.html#test">PFT.tester.test</a> function. Calling this method while already
-running has no side effects
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-        
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1078">line 1078</a>
-    </li></ul></dd>
-    
-    
-    
-    
-    
-    
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="stop"><span class="type-signature">&lt;static> </span>stop<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        function will halt the triggering of any additional tests following
-completion of the existing task
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-        
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1149">line 1149</a>
-    </li></ul></dd>
-    
-    
-    
-    
-    
-    
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="suite"><span class="type-signature">&lt;static> </span>suite<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        function will set the suite of any subsequent tests to
-this suite name
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-        
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line907">line 907</a>
-    </li></ul></dd>
-    
-    
-    
-    
-    
-    
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="test"><span class="type-signature">&lt;static> </span>test<span class="signature">(name, <span class="optional">options</span>, <span class="optional">data</span>, callback)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="run"><span class="type-signature">&lt;static> </span>run<span class="signature">(name, callback, <span class="optional">timeout</span>)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -1514,8 +1085,9 @@ this suite name
     
     <div class="description">
         function will schedule the passed in <a href="global.html#testCallback">testCallback</a> for execution.
-When the test is complete it MUST call <a href="PFT.tester.html#done">PFT.tester.done</a> to indicate
-that the next step should proceed
+When the test is complete it MUST call one of <a href="PFT.tester.assert.html#done">PFT.tester.assert.done</a>,
+PFT.tester.assert.pass, {@link PFT.tester.assert.fail} or an
+assertion must fail to indicate that the next test should proceed.
     </div>
     
 
@@ -1588,216 +1160,6 @@ that the next step should proceed
 	
         <tr>
             
-                <td class="name"><code>options</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-            
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-                    
-                
-                    
-                
-                </td>
-            
-            
-            
-                <td class="default">
-                
-                    {}
-                
-                </td>
-            
-            
-            <td class="description last">a set of options specific to this test
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-		
-		<th>Type</th>
-		
-		
-		<th>Argument</th>
-		
-		
-		
-		
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-	
-	<tbody>
-	
-	
-        <tr>
-            
-                <td class="name"><code>maxDuration</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">Integer</span>
-
-
-            
-            </td>
-            
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-                    
-                
-                    
-                
-                </td>
-            
-            
-            
-            
-            <td class="description last">the maximum amount of time this
-test will be allowed to execute in milliseconds</td>
-        </tr>
-	
-	
-	
-        <tr>
-            
-                <td class="name"><code>setup</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-            
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-                    
-                
-                    
-                
-                </td>
-            
-            
-            
-            
-            <td class="description last">a function to be called prior to execution
-of this test. When complete a setup function MUST call <a href="PFT.tester.html#done">PFT.tester.done</a>
-to indicate that the setup is complete</td>
-        </tr>
-	
-	
-	
-        <tr>
-            
-                <td class="name"><code>tearDown</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">Integer</span>
-
-
-            
-            </td>
-            
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-                    
-                
-                    
-                
-                </td>
-            
-            
-            
-            
-            <td class="description last">a function to be called after execution
-of this test. When complete a tearDown function MUST call <a href="PFT.tester.html#done">PFT.tester.done</a>
-to indicate that the tearDown is complete</td>
-        </tr>
-	
-	
-	</tbody>
-</table>
-            </td>
-        </tr>
-	
-	
-	
-        <tr>
-            
-                <td class="name"><code>data</code></td>
-            
-            
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-            
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-                    
-                
-                    
-                
-                </td>
-            
-            
-            
-                <td class="default">
-                
-                    undefined
-                
-                </td>
-            
-            
-            <td class="description last">an Object to be passed to the test upon
-execution. This can be used for parameterization of tests.</td>
-        </tr>
-	
-	
-	
-        <tr>
-            
                 <td class="name"><code>callback</code></td>
             
             
@@ -1827,8 +1189,49 @@ execution. This can be used for parameterization of tests.</td>
             
             
             <td class="description last">the function to execute as a test. when
-executed this function will be passed three arguments, a PhantomJs.Webpage.Page,
-a data object and a reference to the <a href="PFT.tester.assert.html">PFT.tester.assert</a> object</td>
+executed this function will be passed two arguments, a PhantomJs.Webpage.Page,
+and a <a href="PFT.tester.assert.html">PFT.tester.assert</a> object referencing the test</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>timeout</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+            
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+                    
+                
+                    
+                
+                </td>
+            
+            
+            
+                <td class="default">
+                
+                    PFT.DEFAULT_TIMEOUT
+                
+                </td>
+            
+            
+            <td class="description last">the maximum time in
+milliseconds to allow the test to execute before it is marked as a fail.
+this time includes any setup and teardown that is specified</td>
         </tr>
 	
 	
@@ -1859,7 +1262,7 @@ a data object and a reference to the <a href="PFT.tester.assert.html">PFT.tester
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line936">line 936</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line968">line 968</a>
     </li></ul></dd>
     
     
@@ -1906,7 +1309,7 @@ a data object and a reference to the <a href="PFT.tester.assert.html">PFT.tester
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Tue Feb 03 2015 15:56:54 GMT-0000 (GMT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Tue Feb 10 2015 17:26:51 GMT-0000 (GMT)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -6,11 +6,11 @@ var console = {
         console.records.push(arguments);
     },
     warn: function () {
-        tmpConsole.warn(arguments);
+        tmpConsole.log(JSON.stringify(arguments));
     },
     error: function () {
-        tmpConsole.error(console.records.join('\n'), arguments);
+        tmpConsole.log(console.records.join('\n'), arguments);
     },
 };
 
-QUnit.config.testTimeout = 3000;
+QUnit.config.testTimeout = 5000;
