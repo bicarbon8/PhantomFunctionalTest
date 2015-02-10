@@ -19,10 +19,10 @@ QUnit.test("can add a test", function (assert) {
         done();
     };
     PFT.tester.run("sample test", function (page, tassert) {
-        assert.ok(page, "expected page to be valid but was: " + page);
-        assert.ok(page.open, "expected page to have the open method but did not");
-        assert.ok(tassert, "expected a valid assert object but was: " + tassert);
-        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object but did not");
+        assert.ok(page, "expected page to be valid: " + page);
+        assert.ok(page.open, "expected page to have the open method");
+        assert.ok(tassert, "expected a valid assert object: " + tassert);
+        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object");
 
         tassert.done();
     });
@@ -37,7 +37,7 @@ QUnit.test("can add a test with a timeout", function (assert) {
     PFT.tester.onTimeout = function (details) {
         assert.ok(details.test.name === "sample test");
         var elapsed = new Date().getTime() - start;
-        assert.ok(elapsed < 2000 && elapsed > 1000, "expected that less than 2 and more than 1 seconds passed but was: " + elapsed);
+        assert.ok(elapsed < 2000 && elapsed > 1000, "expected that less than 2 and more than 1 seconds passed: " + elapsed);
     };
     PFT.tester.onTestCompleted = function (details) {
         assert.ok(details.test.name === "sample test");
@@ -46,18 +46,15 @@ QUnit.test("can add a test with a timeout", function (assert) {
         done();
     };
     PFT.tester.run("sample test", function (page, tassert) {
-        assert.ok(page, "expected page to be valid but was: " + page);
-        assert.ok(page.open, "expected page to have the open method but did not");
-        assert.ok(tassert, "expected a valid assert object but was: " + tassert);
-        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object but did not");
+        assert.ok(page, "expected page to be valid: " + page);
+        assert.ok(page.open, "expected page to have the open method");
+        assert.ok(tassert, "expected a valid assert object: " + tassert);
+        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object");
     }, 1000);
 });
 QUnit.test("can add a test with setup", function (assert) {
     var done = assert.async();
-    expect(8);
-    PFT.tester.onSuiteStarted = function (details) {
-        assert.ok(details.suite.name === "sample suite", "expected onSuiteStarted");
-    };
+    expect(7);
     PFT.tester.onTestStarted = function (details) {
         assert.ok(details.test.name === "sample test", "expected onTestStarted");
     };
@@ -69,20 +66,17 @@ QUnit.test("can add a test with setup", function (assert) {
     };
     PFT.tester.suite("sample suite", { setup: function (done) { assert.ok(true, "expected setup"); done(); } });
     PFT.tester.run("sample test", function (page, tassert) {
-        assert.ok(page, "expected page to be valid but was: " + page);
-        assert.ok(page.open, "expected page to have the open method but did not");
-        assert.ok(tassert, "expected a valid assert object but was: " + tassert);
-        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object but did not");
+        assert.ok(page, "expected page to be valid: " + page);
+        assert.ok(page.open, "expected page to have the open method");
+        assert.ok(tassert, "expected a valid assert object: " + tassert);
+        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object");
 
         tassert.done();
     });
 });
 QUnit.test("can add a test with teardown", function (assert) {
     var done = assert.async();
-    expect(8);
-    PFT.tester.onSuiteStarted = function (details) {
-        assert.ok(details.suite.name === "sample suite", "expected onSuiteStarted");
-    };
+    expect(7);
     PFT.tester.onTestStarted = function (details) {
         assert.ok(details.test.name === "sample test", "expected onTestStarted");
     };
@@ -94,20 +88,111 @@ QUnit.test("can add a test with teardown", function (assert) {
     };
     PFT.tester.suite("sample suite", { teardown: function (done) { assert.ok(true, "expected teardown"); done(); } });
     PFT.tester.run("sample test", function (page, tassert) {
-        assert.ok(page, "expected page to be valid but was: " + page);
-        assert.ok(page.open, "expected page to have the open method but did not");
-        assert.ok(tassert, "expected a valid assert object but was: " + tassert);
-        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object but did not");
+        assert.ok(page, "expected page to be valid: " + page);
+        assert.ok(page.open, "expected page to have the open method");
+        assert.ok(tassert, "expected a valid assert object: " + tassert);
+        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object");
 
         tassert.done();
     });
 });
+QUnit.test("teardown will run even if test fails", function (assert) {
+    var done = assert.async();
+    expect(3);
+    PFT.tester.onTestStarted = function (details) {
+        assert.ok(details.test.name === "sample test", "expected onTestStarted");
+    };
+    PFT.tester.onTestCompleted = function (details) {
+        assert.ok(details.test.name === "sample test", "expected onTestCompleted");
+    };
+    PFT.tester.onExit = function (details) {
+        done();
+    };
+    PFT.tester.suite("sample suite", { teardown: function (done) { assert.ok(true, "expected teardown"); done(); } });
+    PFT.tester.run("sample test", function (page, tassert) {
+        tassert.fail();
+        assert.ok(fail, "expected to not run");
+    });
+});
+QUnit.test("teardown will run even if last test fails out of many", function (assert) {
+    var start = new Date().getTime();
+    var done = assert.async();
+    expect(4);
+    PFT.tester.onExit = function (details) {
+        var elapsed = new Date().getTime() - start;
+        assert.ok(elapsed > 1000 && elapsed < 2000, "expected test to complete in 1-2 seconds: " + elapsed);
+        done();
+    };
+    PFT.tester.suite("sample suite", { teardown: function (done) { assert.ok(true, "expected teardown"); done(); } });
+    PFT.tester.run("sample test 1", function (page, tassert) {
+        // test runs for 1/2 sec
+        setTimeout(function () {
+            tassert.pass();
+            assert.ok(fail, "expected to not run");
+        }, 500);
+    });
+    PFT.tester.run("sample test 2", function (page, tassert) {
+        // test runs for 1/2 sec
+        setTimeout(function () {
+            tassert.pass();
+            assert.ok(fail, "expected to not run");
+        }, 500);
+    });
+    PFT.tester.run("sample test 3", function (page, tassert) {
+        tassert.fail();
+        assert.ok(fail, "expected to not run");
+    });
+});
+QUnit.test("teardown will run even if test errors", function (assert) {
+    var done = assert.async();
+    expect(3);
+    PFT.tester.onTestStarted = function (details) {
+        assert.ok(details.test.name === "sample test", "expected onTestStarted");
+    };
+    PFT.tester.onTestCompleted = function (details) {
+        assert.ok(details.test.name === "sample test", "expected onTestCompleted");
+    };
+    PFT.tester.onExit = function (details) {
+        done();
+    };
+    PFT.tester.suite("sample suite", { teardown: function (done) { assert.ok(true, "expected teardown after error"); done(); } });
+    PFT.tester.run("sample test", function (page, tassert) {
+        does.not.exist = foo;
+        assert.ok(fail, "expected to not run");
+    });
+});
+QUnit.test("teardown will run even if last test fails out of many", function (assert) {
+    var start = new Date().getTime();
+    var done = assert.async();
+    expect(4);
+    PFT.tester.onExit = function (details) {
+        var elapsed = new Date().getTime() - start;
+        assert.ok(elapsed > 1000 && elapsed < 2000, "expected test to complete in 1-2 seconds: " + elapsed);
+        done();
+    };
+    PFT.tester.suite("sample suite", { teardown: function (done) { assert.ok(true, "expected teardown after error"); done(); } });
+    PFT.tester.run("sample test 1", function (page, tassert) {
+        // test runs for 1/2 sec
+        setTimeout(function () {
+            tassert.pass();
+            assert.ok(fail, "expected to not run");
+        }, 500);
+    });
+    PFT.tester.run("sample test 2", function (page, tassert) {
+        // test runs for 1/2 sec
+        setTimeout(function () {
+            tassert.pass();
+            assert.ok(fail, "expected to not run");
+        }, 500);
+    });
+    PFT.tester.run("sample test 3", function (page, tassert) {
+        does.not.exist = foo;
+        assert.ok(fail, "expected to not run");
+    });
+});
 QUnit.test("can add a test with setup and teardown", function (assert) {
     var done = assert.async();
-    expect(9);
-    PFT.tester.onSuiteStarted = function (details) {
-        assert.ok(details.suite.name === "sample suite", "expected onSuiteStarted");
-    };
+    expect(8);
     PFT.tester.onTestStarted = function (details) {
         assert.ok(details.test.name === "sample test", "expected onTestStarted");
     };
@@ -127,10 +212,10 @@ QUnit.test("can add a test with setup and teardown", function (assert) {
         }
     });
     PFT.tester.run("sample test", function (page, tassert) {
-        assert.ok(page, "expected page to be valid but was: " + page);
-        assert.ok(page.open, "expected page to have the open method but did not");
-        assert.ok(tassert, "expected a valid assert object but was: " + tassert);
-        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object but did not");
+        assert.ok(page, "expected page to be valid: " + page);
+        assert.ok(page.open, "expected page to have the open method");
+        assert.ok(tassert, "expected a valid assert object: " + tassert);
+        assert.ok(tassert.isTrue, "expected the isTrue function to exist on the assert object");
 
         tassert.done();
     });

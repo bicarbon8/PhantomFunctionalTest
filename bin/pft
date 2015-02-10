@@ -114,6 +114,7 @@ function startProcesses (options, phantomArgs, scriptsArray) {
             }
             var exitCode = (errors > 0) ? errors : code;
             runningThreads--;
+            // console.log(runningThreads + " threads still running...");
             if (runningThreads === 0) {
                 if (options.threads > 1) {
                     console.log("All threads completed with total of '" + errors + "' failures / errors in: " + convertMsToHumanReadable(new Date().getTime() - startTime));

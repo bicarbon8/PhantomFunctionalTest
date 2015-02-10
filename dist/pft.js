@@ -310,10 +310,12 @@ phantom.onError = function(msg, trace) {
             // non-assertion exception
             t.errors.push(msg);
             PFT.tester.onError({ test: t, message: msg });
-            PFT.tester.closeTest(t);
         }
+        // release the lock so subsequent items can proceed
+        MutexJs.release(t.unlockId);
     } else {
         // exit immediately
+        MutexJs._reset();
         PFT.logger.log(PFT.logger.ERROR, msg, false);
 
         phantom.exit(1);
@@ -892,7 +894,6 @@ PFT.tester = {
         PFT.tester._tests = [];
         PFT.tester._suites = [];
         PFT.tester.onTestStarted = function (details) {};
-        PFT.tester.onSuiteStarted = function (details) {};
         PFT.tester.onTestCompleted = function (details) {};
         PFT.tester.onPageError = function (details) {};
         PFT.tester.onError = function (details) {};
@@ -910,8 +911,6 @@ PFT.tester = {
             teardown: o.teardown,
         };
         PFT.tester._suites.push(s);
-        PFT.logger.log(PFT.logger.TEST, "Suite: " + s.name);
-        PFT.tester.onSuiteStarted({ suite: s });
     },
 
     /** @ignore */
@@ -937,7 +936,7 @@ PFT.tester = {
     currentSuite: function () {
         var s = null;
         if (PFT.tester._suites.length > 0) {
-            s = PFT.tester._suites[0];
+            s = PFT.tester._suites[PFT.tester._suites.length - 1];
         }
         return s;
     },
@@ -948,7 +947,7 @@ PFT.tester = {
     currentTest: function () {
         var t = null;
         if (PFT.tester._tests.length > 0) {
-            t = PFT.tester._tests[0];
+            t = PFT.tester._tests[PFT.tester._tests.length - 1];
         }
         return t;
     },
@@ -974,56 +973,59 @@ PFT.tester = {
 
         // get a lock so we can run the test
         MutexJs.lockFor(PFT.tester.TEST, function onStart(runUnlockId) {
-            var msg = "Starting: '" + t.name + "'...";
+            t.runUnlockId = runUnlockId;
+            var suite = "";
+            if (t.suite) {
+                if (t.suite.name) {
+                    suite = t.suite.name + " - ";
+                }
+            }
+            var msg = "Starting: '" + suite + t.name + "'...";
             PFT.logger.log(PFT.logger.TEST, msg);
             var testId = PFT.guid();
 
             // run setup
             if (t.suite && t.suite.setup) {
                 MutexJs.lock(testId, function setup(unlockId) {
-                    var done = function () {
-                        MutexJs.release(unlockId);
-                    };
-                    try {
+                    setTimeout(function () {
+                        var done = function () {
+                            MutexJs.release(unlockId);
+                        };
                         t.suite.setup.call(this, done);
-                    } catch (e) {
-                        phantom.onError(e);
-                    }
+                    }.bind(this), 1);
                 }.bind(this));
             }
 
             // run test
             MutexJs.lock(testId, function test(unlockId) {
-                t.page = PFT.createPage();
-                t.unlockId = unlockId;
-                t.startTime = new Date().getTime();
-                PFT.tester._tests.push(t);
-                PFT.tester.onTestStarted({ test: t });
-                try {
+                setTimeout(function () {
+                    t.page = PFT.createPage();
+                    t.unlockId = unlockId;
+                    t.startTime = new Date().getTime();
+                    PFT.tester._tests.push(t);
+                    PFT.tester.onTestStarted({ test: t });
                     callback.call(this, t.page, new PFT.tester.assert(t));
-                } catch (e) {
-                    phantom.onError(e);
-                }
+                }.bind(this), 1);
             }.bind(this));
 
             // run teardown
             if (t.suite && t.suite.teardown) {
                 MutexJs.lock(testId, function teardown(unlockId) {
-                    var done = function () {
-                        MutexJs.release(unlockId);
-                    };
-                    try {
+                    setTimeout(function () {
+                        var done = function () {
+                            MutexJs.release(unlockId);
+                        };
                         t.suite.teardown.call(this, done);
-                    } catch (e) {
-                        phantom.onError(e);
-                    }
+                    }.bind(this), 1);
                 }.bind(this));
             }
 
             MutexJs.lock(testId, function done(unlockId) {
-                PFT.tester.closeTest(t);
-                MutexJs.release(unlockId);
-                MutexJs.release(runUnlockId);
+                setTimeout(function () {
+                    PFT.tester.closeTest(t);
+                    MutexJs.release(unlockId);
+                    MutexJs.release(runUnlockId);
+                }.bind(this), 1);
             }.bind(this));
         }.bind(this), t.timeout, function onTimeout() {
             var msg = "Test '" + t.name + "' exceeded timeout of " + t.timeout;
@@ -1140,7 +1142,13 @@ PFT.tester = {
     closeTest: function (testObj) {
         var duration = PFT.convertMsToHumanReadable(new Date().getTime() - testObj.startTime);
         testObj.duration = duration;
-        var msg = "Completed: '" + testObj.name + "' in " + duration + " with " + testObj.passes + " passes, " +
+        var suite = "";
+        if (testObj.suite) {
+            if (testObj.suite.name) {
+                suite = testObj.suite.name + " - ";
+            }
+        }
+        var msg = "Completed: '" + suite + testObj.name + "' in " + duration + " with " + testObj.passes + " passes, " +
             testObj.failures.length + " failures, " + testObj.errors.length + " errors.";
         PFT.logger.log(PFT.logger.TEST, msg);
         PFT.tester.onTestCompleted({ test: testObj });
@@ -1222,15 +1230,6 @@ PFT.tester = {
      * currently started test object
      */
     onTestStarted: function (details) {
-        // hook for testing
-    },
-
-    /**
-     * function hook that is called when a new suite is started
-     * @param {Object} details - an object containing a 'suite' property with
-     * the current suite's name
-     */
-    onSuiteStarted: function (details) {
         // hook for testing
     },
 

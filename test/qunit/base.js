@@ -13,4 +13,4 @@ var console = {
     },
 };
 
-QUnit.config.testTimeout = 3000;
+QUnit.config.testTimeout = 5000;
