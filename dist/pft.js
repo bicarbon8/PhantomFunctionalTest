@@ -872,9 +872,6 @@ PFT.tester = {
     timeOutAfter: PFT.DEFAULT_TIMEOUT,
 
     /** @ignore */
-    ready: true,
-
-    /** @ignore */
     running: false,
 
     /** @ignore */
@@ -961,6 +958,13 @@ PFT.tester = {
         return t;
     },
 
+    /** @ignore */
+    captureStartTime: function () {
+        if (PFT.tester.globalStartTime === null) {
+            PFT.tester.globalStartTime = new Date().getTime();
+        }
+    },
+
     /**
      * function will schedule the passed in {@link testCallback} for execution.
      * When the test is complete it MUST call one of {@link PFT.tester.assert.done},
@@ -975,6 +979,7 @@ PFT.tester = {
      * this time includes any setup and teardown that is specified
      */
     run: function (name, callback, timeout) {
+        PFT.tester.captureStartTime();
         PFT.tester.remainingCount++;
         // get a test object
         var t = PFT.tester.test(name, callback, PFT.tester.currentSuite(), timeout);
@@ -1177,6 +1182,7 @@ PFT.tester = {
         // force test execution to stop
         var testObj = PFT.tester.currentTest();
         testObj.halt = true;
+
         throw "DONE";
     },
 
