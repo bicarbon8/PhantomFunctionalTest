@@ -5,7 +5,7 @@ var phantomMock = {
 		document.head.appendChild(s);
 	},
 	exit: function() {
-		// do nothing
+		PFT.tester.running = false;
 	},
 	cookies: [],
 	mock: true,
@@ -56,4 +56,5 @@ var require = function (name) {
 
 window.onerror = function (msg, url, line) {
     phantom.onError(msg, line);
+	return true;
 };
