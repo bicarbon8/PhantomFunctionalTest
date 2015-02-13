@@ -74,6 +74,13 @@ PFT.DEFAULT_TIMEOUT = 60000; // 1 minute
 PFT.IMAGES_DIR = './img/';
 
 /**
+ * @property {boolean} [PFT.IGNORE_PAGE_ERRORS=false] - by default all page
+ * errors (script errors on the page) will result in an error and halting of
+ * current processing. if set to true these will be ignored
+ */
+PFT.IGNORE_PAGE_ERRORS = false;
+
+/**
  * function will create a new page in PhantomJs with the passed in
  * viewport dimensions or a default of 1024x800 and using the passed
  * in headers. If called within a PFT.tester.test the returned page
@@ -330,16 +337,8 @@ phantom.onError = function(msg, trace) {
     msg += stack;
 
     // only exit on unexpected errors
-    if (PFT.tester.running && PFT.tester._tests.length > 0) {
-        var t = PFT.tester.currentTest();
-        // halt current test and go to next
-        if (!t.halt) {
-            // non-assertion exception
-            t.errors.push(msg);
-            PFT.tester.onError({ test: t, message: msg });
-        }
-        // release the lock so subsequent items can proceed
-        MutexJs.release(t.unlockId);
+    if (PFT.tester._tests.length > 0) {
+        PFT.tester.handleError(msg);
     } else {
         // exit immediately
         MutexJs._reset();
@@ -455,7 +454,7 @@ PFT.logger = {
      * output message will be appended with the current execution stack
      */
     log: function(levelInt, message, includeStackTrace) {
-        if (levelInt && !isNaN(levelInt) && levelInt > PFT.logger.UNKNOWN && levelInt >= PFT.logger.getLogLevelInt(PFT.logger.logLevel)) {
+        if (!isNaN(levelInt) && levelInt > PFT.logger.UNKNOWN && levelInt >= PFT.logger.getLogLevelInt(PFT.logger.logLevel)) {
             if (includeStackTrace) {
                 message += "\n" + PFT.logger._getStackTrace();
             }
@@ -539,6 +538,10 @@ PFT.BasePage = function(page, baseUrl) {
         }
         PFT.trace(msgStack.join('\n'));
         PFT.tester.onPageError({ message: msgStack.join('\n') });
+
+        if (!PFT.IGNORE_PAGE_ERRORS) {
+            phantom.onError(msg, trace);
+        }
     };
 
     this.page.onConsoleMessage = function (msg, lineNum, sourceId) {
@@ -754,7 +757,6 @@ PFT.BasePage.prototype.elementPosition = function(selector) {
 PFT.BasePage.prototype.click = function(selector) {
     PFT.debug("clicking on: '"+selector+"'...");
     var pos = this.elementPosition(selector);
-    PFT.debug("using javascript click...");
     /* jshint evil:true */
     this.eval(function(s) {
         var ev = document.createEvent("MouseEvent");
@@ -857,7 +859,13 @@ PFT.BasePage.prototype.eval = function() {
     if (arguments && arguments.length > 0) {
         PFT.debug("eval called with '" + arguments.length + "' arguments");
         PFT.trace("evaluating: '" + JSON.stringify(arguments) + "' in page...");
-        return this.page.evaluate.apply(this.page, arguments);
+        var result;
+        try {
+            result = this.page.evaluate.apply(this.page, arguments);
+        } catch (e) {
+            PFT.warn(e);
+        }
+        return result;
     }
 };
 
@@ -897,6 +905,9 @@ PFT.tester = {
     running: false,
 
     /** @ignore */
+    exiting: false,
+
+    /** @ignore */
     _suites: [],
 
     /** @ignore */
@@ -909,12 +920,10 @@ PFT.tester = {
     globalStartTime: null,
 
     /** @ignore */
-    TEARDOWN: "teardown",
-
-    /** @ignore */
     _reset: function () {
         MutexJs._reset();
         PFT.tester.running = false;
+        PFT.tester.exiting = false;
         PFT.tester.globalStartTime = null;
         PFT.tester.timeOutAfter = PFT.DEFAULT_TIMEOUT;
         PFT.tester.remainingCount = 0;
@@ -994,73 +1003,103 @@ PFT.tester = {
      */
     run: function (name, callback, timeout) {
         PFT.tester.remainingCount++;
-        PFT.tester.start();
         // get a test object
         var t = PFT.tester.test(name, callback, PFT.tester.currentSuite(), timeout);
 
-        // get a lock so we can run the test
-        MutexJs.lockFor(PFT.tester.TEST, function onStart(runUnlockId) {
-            t.runUnlockId = runUnlockId;
-            var suite = "";
-            if (t.suite) {
-                if (t.suite.name) {
-                    suite = t.suite.name + " - ";
+        (function (testObj) {
+            // get a lock so we can run the test
+            MutexJs.lockFor("PFT.tester.test", function onStart(runUnlockId) {
+                testObj.runUnlockId = runUnlockId;
+                PFT.tester._tests.push(testObj);
+                var suite = "";
+                if (testObj.suite) {
+                    if (testObj.suite.name) {
+                        suite = testObj.suite.name + " - ";
+                    }
                 }
-            }
-            var msg = "Starting: '" + suite + t.name + "'...";
-            PFT.logger.log(PFT.logger.TEST, msg);
-            var testId = PFT.guid();
+                var msg = "Starting: '" + suite + testObj.name + "'...";
+                PFT.logger.log(PFT.logger.TEST, msg);
+                var testId = PFT.guid();
 
-            // run setup
-            if (t.suite && t.suite.setup) {
-                MutexJs.lock(testId, function setup(unlockId) {
-                    setTimeout(function () {
+                // run setup
+                if (testObj.suite && testObj.suite.setup) {
+                    MutexJs.lock(testId, function setup(unlockId) {
+                        testObj.unlockId = unlockId;
                         var done = function () {
-                            MutexJs.release(unlockId);
+                            PFT.tester.haltCurrentScript();
                         };
-                        t.suite.setup.call(this, done);
-                    }.bind(this), 1);
-                }.bind(this));
-            }
+                        testObj.suite.setup.call(this, done);
+                    });
+                }
 
-            // run test
-            MutexJs.lock(testId, function test(unlockId) {
-                setTimeout(function () {
-                    t.page = PFT.createPage();
-                    t.unlockId = unlockId;
-                    t.startTime = new Date().getTime();
-                    PFT.tester._tests.push(t);
-                    PFT.tester.onTestStarted({ test: t });
-                    callback.call(this, t.page, new PFT.tester.assert(t));
-                }.bind(this), 1);
-            }.bind(this));
+                // run test
+                MutexJs.lock(testId, function test(unlockId) {
+                    testObj.page = PFT.createPage();
+                    testObj.unlockId = unlockId;
+                    testObj.startTime = new Date().getTime();
+                    PFT.tester.onTestStarted({ "test": testObj });
+                    callback.call(this, testObj.page, new PFT.tester.assert(testObj));
+                });
 
-            // run teardown
-            if (t.suite && t.suite.teardown) {
-                MutexJs.lock(testId, function teardown(unlockId) {
-                    setTimeout(function () {
+                // run teardown
+                if (testObj.suite && testObj.suite.teardown) {
+                    MutexJs.lock(testId, function teardown(unlockId) {
+                        testObj.unlockId = unlockId;
                         var done = function () {
-                            MutexJs.release(unlockId);
+                            PFT.tester.haltCurrentScript();
                         };
-                        t.suite.teardown.call(this, done);
-                    }.bind(this), 1);
-                }.bind(this));
-            }
+                        testObj.suite.teardown.call(this, done);
+                    });
+                }
 
-            MutexJs.lock(testId, function done(unlockId) {
-                setTimeout(function () {
-                    PFT.tester.closeTest(t);
+                MutexJs.lock(testId, function done(unlockId) {
+                    PFT.tester.closeTest(testObj);
                     MutexJs.release(unlockId);
                     MutexJs.release(runUnlockId);
-                }.bind(this), 1);
-            }.bind(this));
-        }.bind(this), t.timeout, function onTimeout() {
-            var msg = "Test '" + t.name + "' exceeded timeout of " + t.timeout;
-            t.errors.push(msg);
-            PFT.logger.log(PFT.logger.TEST, msg);
-            PFT.tester.onTimeout({ test: t, message: msg });
-            PFT.tester.closeTest(t);
-        }.bind(this));
+                });
+            }, testObj.timeout, function onTimeout() {
+                var msg = "Test '" + testObj.name + "' exceeded timeout of " + testObj.timeout;
+                testObj.errors.push(msg);
+                PFT.logger.log(PFT.logger.TEST, msg);
+                PFT.tester.onTimeout({ "test": testObj, message: msg });
+
+                // close resources
+                PFT.tester.closeTest(testObj);
+
+                // don't continue running
+                testObj.unlockId = null;
+
+                PFT.tester.haltCurrentScript();
+            });
+        })(t);
+    },
+
+    /**
+     * function will close out the currently running test objects, but any async
+     * tasks will continue running. to exit these tasks you must use the
+     * {@link assert.done}, {@link assert.pass} or {@link assert.fail} methods
+     * which will exit all test execution and move to the next test.
+     */
+    closeTest: function (testObj) {
+        var duration = PFT.convertMsToHumanReadable(new Date().getTime() - testObj.startTime);
+        testObj.duration = duration;
+        var suite = "";
+        if (testObj.suite) {
+            if (testObj.suite.name) {
+                suite = testObj.suite.name + " - ";
+            }
+        }
+        var msg = "Completed: '" + suite + testObj.name + "' in " + duration + " with " + testObj.passes + " passes, " +
+            testObj.failures.length + " failures, " + testObj.errors.length + " errors.";
+        PFT.logger.log(PFT.logger.TEST, msg);
+        PFT.tester.onTestCompleted({ test: testObj });
+        try {
+            testObj.page.close();
+        } catch (e) {
+            PFT.warn(e);
+        }
+        PFT.tester.remainingCount--;
+        PFT.tester.exitIfDoneTesting();
     },
 
     /**
@@ -1151,58 +1190,57 @@ PFT.tester = {
              * @memberof PFT.tester.assert
              */
             done: function () {
-                MutexJs.release(testObj.unlockId);
-
-                // force test execution to stop
-                testObj.halt = true;
-                throw 'DONE';
+                PFT.tester.haltCurrentScript();
             },
         };
     },
 
     /**
-     * function will close out the currently running test objects, but any async
-     * tasks will continue running. to exit these tasks you must use the
-     * {@link assert.done}, {@link assert.pass} or {@link assert.fail} methods
-     * which will exit all test execution and move to the next test.
+     * function throws an exception to jump out of currently executing section
+     * and prevent further lines of the script from being run
      */
-    closeTest: function (testObj) {
-        var duration = PFT.convertMsToHumanReadable(new Date().getTime() - testObj.startTime);
-        testObj.duration = duration;
-        var suite = "";
-        if (testObj.suite) {
-            if (testObj.suite.name) {
-                suite = testObj.suite.name + " - ";
+    /** @ignore */
+    haltCurrentScript: function () {
+        // force test execution to stop
+        var testObj = PFT.tester.currentTest();
+        testObj.halt = true;
+        throw "DONE";
+    },
+
+    /**
+     * function provides handling for expected exceptions thrown to halt
+     * the currently running script. typically this will be called from the
+     * phantom.onError function if tests are running.
+     */
+    /** @ignore */
+    handleError: function (msg) {
+        MutexJs.recover();
+
+        // halt current step and go to next
+        var t = PFT.tester.currentTest();
+        if (!t.halt) {
+            // unexpected exception so log as error
+            t.errors.push(msg);
+            PFT.tester.onError({ test: t, message: msg });
+        }
+
+        // release the lock so subsequent items can proceed
+        t.halt = undefined;
+        MutexJs.release(t.unlockId);
+    },
+
+    /** @ignore */
+    exitIfDoneTesting: function () {
+        if (PFT.tester.remainingCount === 0) {
+            if (!PFT.tester.exiting) {
+                PFT.tester.exit();
             }
-        }
-        var msg = "Completed: '" + suite + testObj.name + "' in " + duration + " with " + testObj.passes + " passes, " +
-            testObj.failures.length + " failures, " + testObj.errors.length + " errors.";
-        PFT.logger.log(PFT.logger.TEST, msg);
-        PFT.tester.onTestCompleted({ test: testObj });
-        testObj.page.close();
-        PFT.tester.remainingCount--;
-    },
-
-    /** @ignore */
-    start: function () {
-        if (!PFT.tester.running) {
-            PFT.tester.globalStartTime = new Date().getTime();
-            PFT.tester.running = true;
-            PFT.tester.executionLoop();
-        }
-    },
-
-    /** @ignore */
-    executionLoop: function () {
-        if (PFT.tester.remainingCount &lt;= 0) {
-            PFT.tester.exit();
-        } else {
-            setTimeout(PFT.tester.executionLoop, 10);
         }
     },
 
     /** @ignore */
     exit: function () {
+        PFT.tester.exiting = true;
         PFT.tester.running = false;
         var duration = PFT.convertMsToHumanReadable(new Date().getTime() - PFT.tester.globalStartTime);
 
@@ -1375,7 +1413,7 @@ if (!String.prototype.trim) {
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Tue Feb 10 2015 17:26:50 GMT-0000 (GMT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Fri Feb 13 2015 17:30:21 GMT-0000 (GMT)
 </footer>
 
 <script> prettyPrint(); </script>
