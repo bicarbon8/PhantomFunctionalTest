@@ -125,7 +125,6 @@ QUnit.test("teardown will run even if test fails", function (assert) {
     PFT.tester.suite("sample suite", { teardown: function (complete) { assert.ok(true, "expected teardown"); complete(); } });
     PFT.tester.run("teardown will run even if test fails", function (page, tassert) {
         tassert.fail();
-        assert.ok(fail, "expected to not run");
     });
 });
 QUnit.test("teardown will run even if last test fails out of many", function (assert) {
@@ -153,19 +152,16 @@ QUnit.test("teardown will run even if last test fails out of many", function (as
         // test runs for 1/2 sec
         setTimeout(function () {
             tassert.pass();
-            assert.ok(fail, "expected to not run");
         }, 500);
     });
     PFT.tester.run("teardown will run even if last test fails out of many 2", function (page, tassert) {
         // test runs for 1/2 sec
         setTimeout(function () {
             tassert.pass();
-            assert.ok(fail, "expected to not run");
         }, 500);
     });
     PFT.tester.run("teardown will run even if last test fails out of many 3", function (page, tassert) {
         tassert.fail();
-        assert.ok(fail, "expected to not run");
     });
 });
 QUnit.test("teardown will run even if test errors", function (assert) {
@@ -211,14 +207,12 @@ QUnit.test("teardown will run even if last test errors out of many", function (a
         // test runs for 1/2 sec
         setTimeout(function () {
             tassert.pass();
-            assert.ok(fail, "expected to not run");
         }, 500);
     });
     PFT.tester.run("teardown will run even if last test errors out of many 2", function (page, tassert) {
         // test runs for 1/2 sec
         setTimeout(function () {
             tassert.pass();
-            assert.ok(fail, "expected to not run");
         }, 500);
     });
     PFT.tester.run("teardown will run even if last test errors out of many 3", function (page, tassert) {
@@ -269,7 +263,6 @@ QUnit.test("calling assert.pass exits the test and updates passed count", functi
     };
     PFT.tester.run("calling assert.pass exits the test and updates passed count", function (page, tassert) {
         tassert.pass('test passing');
-        assert.ok(false, "expected this would not run");
     });
 });
 QUnit.test("calling assert.pass asynchronously exits the test and updates passed count", function (assert) {
@@ -286,7 +279,6 @@ QUnit.test("calling assert.pass asynchronously exits the test and updates passed
     PFT.tester.run("calling assert.pass asynchronously exits the test and updates passed count", function (page, tassert) {
         setTimeout(function () {
             tassert.pass('test passing');
-            assert.ok(false, "expected this would not run");
         },500);
     });
 });
