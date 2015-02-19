@@ -1004,7 +1004,8 @@ PFT.tester = {
                     MutexJs.lock(testId, function setup(unlockId) {
                         testObj.unlockId = unlockId;
                         var done = function () {
-                            PFT.tester.haltCurrentScript();
+                            // release the current lock
+                            MutexJs.release(testObj.unlockId);
                         };
                         testObj.suite.setup.call(this, done);
                     });
@@ -1024,7 +1025,8 @@ PFT.tester = {
                     MutexJs.lock(testId, function teardown(unlockId) {
                         testObj.unlockId = unlockId;
                         var done = function () {
-                            PFT.tester.haltCurrentScript();
+                            // release the current lock
+                            MutexJs.release(testObj.unlockId);
                         };
                         testObj.suite.teardown.call(this, done);
                     });
@@ -1039,13 +1041,13 @@ PFT.tester = {
                 var msg = "Test '" + testObj.name + "' exceeded timeout of " + testObj.timeout;
                 PFT.tester.onTimeout({ "test": testObj, message: msg });
 
-                // close resources
-                PFT.tester.closeTest(testObj);
-
-                // don't continue running
+                // ensure we can't unlock this step
                 testObj.unlockId = null;
 
-                throw msg;
+                setTimeout(function () {
+                    // ensure any executing scripts are halted
+                    throw msg;
+                }, 0);
             });
         })(t);
     },
@@ -1195,8 +1197,9 @@ PFT.tester = {
         t.errors.push(msg);
         PFT.tester.onError({ test: t, message: msg });
 
-        // release the lock so subsequent items can proceed
-        MutexJs.release(t.unlockId);
+        PFT.tester.closeTest(t);
+        // move to next test
+        MutexJs.release(t.runUnlockId);
     },
 
     /**

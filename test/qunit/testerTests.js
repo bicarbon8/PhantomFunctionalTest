@@ -164,14 +164,17 @@ QUnit.test("teardown will run even if last test fails out of many", function (as
         tassert.fail();
     });
 });
-QUnit.test("teardown will run even if test errors", function (assert) {
+QUnit.test("teardown will not run if test errors", function (assert) {
     var done = assert.async();
     expect(3);
     PFT.tester.onTestStarted = function (details) {
-        assert.ok(details.test.name === "teardown will run even if test errors", "expected onTestStarted");
+        assert.ok(details.test.name === "teardown will not run if test errors", "expected onTestStarted");
+    };
+    PFT.tester.onError = function (details) {
+        assert.ok(details.test.name === "teardown will not run if test errors", "expected onTestCompleted");
     };
     PFT.tester.onTestCompleted = function (details) {
-        assert.ok(details.test.name === "teardown will run even if test errors", "expected onTestCompleted");
+        assert.ok(details.test.name === "teardown will not run if test errors", "expected onTestCompleted");
     };
     PFT.tester.onExit = function (details) {
         done();
@@ -182,15 +185,15 @@ QUnit.test("teardown will run even if test errors", function (assert) {
             complete();
         }
     });
-    PFT.tester.run("teardown will run even if test errors", function (page, tassert) {
+    PFT.tester.run("teardown will not run if test errors", function (page, tassert) {
         does.not.exist = foo;
         assert.ok(fail, "expected to not run");
     });
 });
-QUnit.test("teardown will run even if last test errors out of many", function (assert) {
+QUnit.test("subsequent tests run with teardown after test error", function (assert) {
     var start = new Date().getTime();
     var done = assert.async();
-    expect(4);
+    expect(5);
     PFT.tester.onExit = function (details) {
         var elapsed = new Date().getTime() - start;
         assert.ok(elapsed > 1000 && elapsed < 2000, "expected test to complete in 1-2 seconds: " + elapsed);
@@ -203,21 +206,23 @@ QUnit.test("teardown will run even if last test errors out of many", function (a
             complete();
         }
     });
-    PFT.tester.run("teardown will run even if last test errors out of many 1", function (page, tassert) {
-        // test runs for 1/2 sec
-        setTimeout(function () {
-            tassert.pass();
-        }, 500);
-    });
-    PFT.tester.run("teardown will run even if last test errors out of many 2", function (page, tassert) {
-        // test runs for 1/2 sec
-        setTimeout(function () {
-            tassert.pass();
-        }, 500);
-    });
-    PFT.tester.run("teardown will run even if last test errors out of many 3", function (page, tassert) {
+    PFT.tester.run("subsequent tests run with teardown after test error 1", function (page, tassert) {
         does.not.exist = foo;
         assert.ok(fail, "expected to not run");
+    });
+    PFT.tester.run("subsequent tests run with teardown after test error 2", function (page, tassert) {
+        assert.ok(true);
+        // test runs for 1/2 sec
+        setTimeout(function () {
+            tassert.pass();
+        }, 500);
+    });
+    PFT.tester.run("subsequent tests run with teardown after test error 3", function (page, tassert) {
+        assert.ok(true);
+        // test runs for 1/2 sec
+        setTimeout(function () {
+            tassert.pass();
+        }, 500);
     });
 });
 QUnit.test("can add a test with setup and teardown", function (assert) {
