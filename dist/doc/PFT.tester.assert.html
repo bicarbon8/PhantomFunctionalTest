@@ -64,7 +64,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1083">line 1083</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1081">line 1081</a>
     </li></ul></dd>
     
     
@@ -141,7 +141,7 @@ function when all tasks are complete within a <a href="PFT.tester.html#run">PFT.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1170">line 1170</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1178">line 1178</a>
     </li></ul></dd>
     
     
@@ -261,7 +261,7 @@ subsequent tests can continue.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1156">line 1156</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1164">line 1164</a>
     </li></ul></dd>
     
     
@@ -408,7 +408,7 @@ current test.failures</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1128">line 1128</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1136">line 1136</a>
     </li></ul></dd>
     
     
@@ -523,8 +523,7 @@ value is false
             
             
             <td class="description last">a message to display describing the failure in the
-case of a failed comparison. this message is referenced in the current test as well
-as globally in PFT.tester.failures</td>
+case of a failed comparison. this message is referenced in the current test.failures</td>
         </tr>
 	
 	
@@ -555,7 +554,268 @@ as globally in PFT.tester.failures</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1102">line 1102</a>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1099">line 1099</a>
+    </li></ul></dd>
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="ok"><span class="type-signature">&lt;static> </span>ok<span class="signature">(value, message)</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        alias of <a href="PFT.tester.assert.html#isTrue">PFT.tester.assert.isTrue</a>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">the boolean value to be compared to 'true'</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">a message to display describing the failure in the
+case of a failed comparison. this message is referenced in the current.failures</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1119">line 1119</a>
+    </li></ul></dd>
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="pass"><span class="type-signature">&lt;static> </span>pass<span class="signature">(message)</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        function to signal a successful completion of a test and increment
+the current number of passes by 1.
+function will also call <a href="PFT.tester.assert.html#done">PFT.tester.assert.done</a> so that any
+subsequent tests can continue.
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">a message to display describing the pass.</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="pft.js.html">pft.js</a>, <a href="pft.js.html#line1149">line 1149</a>
     </li></ul></dd>
     
     
@@ -602,7 +862,7 @@ as globally in PFT.tester.failures</td>
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Fri Feb 13 2015 22:40:54 GMT-0000 (GMT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Thu Feb 19 2015 17:46:13 GMT-0000 (GMT)
 </footer>
 
 <script> prettyPrint(); </script>

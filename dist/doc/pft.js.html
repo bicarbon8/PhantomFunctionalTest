@@ -1031,7 +1031,8 @@ PFT.tester = {
                     MutexJs.lock(testId, function setup(unlockId) {
                         testObj.unlockId = unlockId;
                         var done = function () {
-                            PFT.tester.haltCurrentScript();
+                            // release the current lock
+                            MutexJs.release(testObj.unlockId);
                         };
                         testObj.suite.setup.call(this, done);
                     });
@@ -1051,7 +1052,8 @@ PFT.tester = {
                     MutexJs.lock(testId, function teardown(unlockId) {
                         testObj.unlockId = unlockId;
                         var done = function () {
-                            PFT.tester.haltCurrentScript();
+                            // release the current lock
+                            MutexJs.release(testObj.unlockId);
                         };
                         testObj.suite.teardown.call(this, done);
                     });
@@ -1064,26 +1066,22 @@ PFT.tester = {
                 });
             }, testObj.timeout, function onTimeout() {
                 var msg = "Test '" + testObj.name + "' exceeded timeout of " + testObj.timeout;
-                testObj.errors.push(msg);
-                PFT.logger.log(PFT.logger.TEST, msg);
                 PFT.tester.onTimeout({ "test": testObj, message: msg });
 
-                // close resources
-                PFT.tester.closeTest(testObj);
-
-                // don't continue running
+                // ensure we can't unlock this step
                 testObj.unlockId = null;
 
-                PFT.tester.haltCurrentScript();
+                setTimeout(function () {
+                    // ensure any executing scripts are halted
+                    throw msg;
+                }, 0);
             });
         })(t);
     },
 
     /**
      * function will close out the currently running test objects, but any async
-     * tasks will continue running. to exit these tasks you must use the
-     * {@link assert.done}, {@link assert.pass} or {@link assert.fail} methods
-     * which will exit all test execution and move to the next test.
+     * tasks will continue running.
      */
     closeTest: function (testObj) {
         var duration = PFT.convertMsToHumanReadable(new Date().getTime() - testObj.startTime);
@@ -1122,8 +1120,7 @@ PFT.tester = {
              * value is false
              * @param {boolean} value - the boolean value to be compared to 'true'
              * @param {string} message - a message to display describing the failure in the
-             * case of a failed comparison. this message is referenced in the current test as well
-             * as globally in {@link PFT.tester.failures}
+             * case of a failed comparison. this message is referenced in the current test.failures
              * @memberof PFT.tester.assert
              */
             isTrue: function (value, message) {
@@ -1137,6 +1134,17 @@ PFT.tester = {
                 } else {
                     testObj.passes++;
                 }
+            },
+
+            /**
+             * alias of {@link PFT.tester.assert.isTrue}
+             * @param {boolean} value - the boolean value to be compared to 'true'
+             * @param {string} message - a message to display describing the failure in the
+             * case of a failed comparison. this message is referenced in the current.failures
+             * @memberof PFT.tester.assert
+             */
+            ok: function (value, message) {
+                this.isTrue(value, message);
             },
 
             /**
@@ -1163,7 +1171,7 @@ PFT.tester = {
              * function will also call {@link PFT.tester.assert.done} so that any
              * subsequent tests can continue.
              * @param {string} message - a message to display describing the pass.
-             * @memberof assert
+             * @memberof PFT.tester.assert
              */
             pass: function (message) {
                 var m = message || testObj.name;
@@ -1195,22 +1203,10 @@ PFT.tester = {
              * @memberof PFT.tester.assert
              */
             done: function () {
-                PFT.tester.haltCurrentScript();
+                // release the current lock
+                MutexJs.release(testObj.unlockId);
             },
         };
-    },
-
-    /**
-     * function throws an exception to jump out of currently executing section
-     * and prevent further lines of the script from being run
-     */
-    /** @ignore */
-    haltCurrentScript: function () {
-        // force test execution to stop
-        var testObj = PFT.tester.currentTest();
-        testObj.halt = true;
-
-        throw "DONE";
     },
 
     /**
@@ -1220,21 +1216,23 @@ PFT.tester = {
      */
     /** @ignore */
     handleError: function (msg) {
+        // restart MutexJs in case exception caused fatal javascript halt
         MutexJs.recover();
 
-        // halt current step and go to next
+        // unexpected exception so log in errors and move to next
         var t = PFT.tester.currentTest();
-        if (!t.halt) {
-            // unexpected exception so log as error
-            t.errors.push(msg);
-            PFT.tester.onError({ test: t, message: msg });
-        }
+        t.errors.push(msg);
+        PFT.tester.onError({ test: t, message: msg });
 
-        // release the lock so subsequent items can proceed
-        t.halt = undefined;
-        MutexJs.release(t.unlockId);
+        PFT.tester.closeTest(t);
+        // move to next test
+        MutexJs.release(t.runUnlockId);
     },
 
+    /**
+     * function will indicate that we should exit if no tests remain to be run
+     * and then it will call the {@link PFT.tester.exit} function
+     */
     /** @ignore */
     exitIfDoneTesting: function () {
         if (PFT.tester.remainingCount === 0) {
@@ -1363,10 +1361,8 @@ PFT.tester = {
  * @callback testCallback
  * @param {PhantomJs.Webpage.Page} page - a PhantomJs Page object for use in
  * testing
- * @param {Object} data - the data object passed to the {@link PFT.tester.test}
- * function
- * @param {PFT.tester.assert} assert - a convenience object for
- * accessing {@link PFT.tester.assert}
+ * @param {PFT.tester.assert} assert - the test controller that allows for
+ * indicating the test status including pass, fail, and done for async control
  */
 
 // polyfill for .bind() call (not supported in PhantomJs)
@@ -1419,7 +1415,7 @@ if (!String.prototype.trim) {
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Fri Feb 13 2015 22:40:52 GMT-0000 (GMT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Thu Feb 19 2015 17:46:12 GMT-0000 (GMT)
 </footer>
 
 <script> prettyPrint(); </script>
